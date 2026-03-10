@@ -246,3 +246,8 @@ ggplot(coef_df, aes(x = term, y = median, color = cluster)) +
     y = "Median Coefficients"
   ) +
   theme_light()
+
+# Write out clustering
+annot_z <- annot_z %>% rename_with(~ paste0(.x, "_z"), .cols = 1:3)
+corpus <- bind_cols(df, annot_z)
+write.csv(corpus, file = "../output/data/corpus.csv", quote = T, row.names = F)
