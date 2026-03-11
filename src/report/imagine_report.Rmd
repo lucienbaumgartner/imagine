@@ -87,7 +87,7 @@ plot(gmm_res, what = "BIC",
      )
 ```
 
-For the purposes of this mock-up analysis, we nonetheless adopted a 2-component solution, interpreting each component as a distinct hypothesized sense of imagine. To visualize separability, principal component analysis (PCA) was applied to the standardized annotation space, and cluster assignments were projected onto the first two principal components. The 2-component Gaussian mixture model identified two clusters that were clearly separable in the reduced two-dimensional PCA space (see Figure \ref{fig:pcaGMM}). Visual inspection indicates no overlap between clusters, suggesting that the three annotation dimensions jointly support a coherent partitioning of the data into two latent sense groupings.
+For the purposes of this mock-up analysis, we adopted a 2-component solution top-down (in accordance with the two-senses expectation), interpreting each component as a distinct hypothesized sense of \textit{imagine}. To visualize separability, principal component analysis (PCA) was applied to the standardized annotation space, and cluster assignments were projected onto the first two principal components. The 2-component GMM identified two clusters that were clearly separable in the reduced two-dimensional PCA space (see Figure \ref{fig:pcaGMM}). Visual inspection indicates no overlap between clusters, suggesting that the three annotation dimensions jointly support a coherent partitioning of the data into two latent sense groupings.
 
 ```{r fig.width=3.5, fig.height=2.5, fig.pos="h", fig.cap="PCA of annotation space with latent sense clusters.\\label{fig:pcaGMM}"}
 # option with three clusters is preferred, but we use a two-cluster solution for the mock up
@@ -121,7 +121,7 @@ ggplot(pca_res, aes(PC1, PC2, color = as.factor(paste0("sense ", sense)))) +
 
 ## Predictive Modeling of Sense Membership
 
-To characterize how annotation dimensions jointly predict latent sense membership, we fit a multinomial generalized linear model with ridge (L2) regularization.\footnote{Note that the multinomial model (instead of a binomial one) was used mainly because it allows for modeling $>2$ senses, if we need that at a later stage.} Cluster assignment from the GMM served as the dependent variable. Predictors included all three annotation dimensions and their pairwise interactions. Regularization strength was selected via cross-validation to promote coefficient stability. Because latent sense labels were constructed via clustering in the same annotation space used as predictors, the observed predictive performance does not provide independent evidence about the determinants of sense membership. Rather, the multinomial model serves a descriptive role, summarizing how hypothesized senses of *imagine* are distributed across the joint space defined by intentionality, factivity, and pictoriality. Accordingly, coefficient estimates and performance metrics are interpreted as characterizations of the induced partition rather than as inferential tests.
+To characterize how annotation dimensions jointly predict latent sense membership, we fit a multinomial generalized linear model with ridge (L2) regularization.\footnote{Note that the multinomial model (instead of a binomial one) was used mainly because it allows for modeling $>2$ senses, if we need that at a later stage.} Cluster assignment from the GMM served as the dependent variable. Predictors included all three annotation dimensions and their pairwise interactions. Regularization strength was selected via cross-validation to promote coefficient stability. Because latent sense labels were constructed via clustering in the same annotation space used as predictors, the observed predictive performance does not provide independent evidence about the determinants of sense membership. Rather, the multinomial model serves a descriptive role, summarizing how hypothesized senses of \textit{imagine} are distributed across the joint space defined by intentionality, factivity, and pictoriality. Accordingly, coefficient estimates and performance metrics are interpreted as characterizations of the induced partition rather than as inferential tests.
 
 ```{r}
 ### GLM with ridge regularization
@@ -177,7 +177,7 @@ median_max_prob <- median(max_prob)
 iqr_max_prob <- IQR(max_prob)
 ```
 
-The multinomial model demonstrated high apparent classification performance, with a cross-validated accuracy of `r round(glm_accuracy * 100, 1)`%, with an optimal $\lambda$=`r round(best_lambda, 3)`. This level of performance is expected, given that latent sense labels were derived from the same annotation dimensions used as predictors. Predicted sense assignments were associated with high posterior concentration, with a median maximum predicted probability of `r round(median_max_prob, 2)` (IQR=`r round(iqr_max_prob, 2)`), indicating that most observations were assigned to a sense with high model confidence.
+The multinomial model demonstrated high apparent classification performance, with a cross-validated accuracy of `r round(glm_accuracy * 100, 1)`%, with optimal $\lambda$=`r round(best_lambda, 3)`. This level of performance is expected, given that latent sense labels were derived from the same annotation dimensions used as predictors. Predicted sense assignments were associated with high posterior concentration, with a median maximum predicted probability of `r round(median_max_prob, 2)` (IQR=`r round(iqr_max_prob, 2)`), indicating that most observations were assigned to a sense with high model confidence.
 
 As a robustness check, we assessed coefficient stability using nonparametric bootstrapping (500 resamples). Bootstrap confidence intervals were narrow across main effects and interactions (Figure \ref{fig:bootstrapping}), indicating that the fitted probability surfaces were numerically stable under resampling. All predictors had perfect stability across iterations (none of them was ever dropped).
 
@@ -257,6 +257,8 @@ ggplot(coef_df, aes(x = term, y = median, color = cluster)) +
 
 ```
 
+\medskip 
+
 Predicted probabilities based on the optimal model were generated across the observed range of each pair of annotation dimensions while holding the third dimension constant at its median. These predictions were visualized in Figure \ref{fig:xEffects} as two-dimensional heatmaps to facilitate interpretation of interaction patterns.
 
 ```{r out.width='.32\\linewidth', fig.width=3, fig.height=3, fig.show='hold', fig.align='center', fig.cap="Predicted sense probability based on GLM with ridge regularization for 2-way interactions. The third dimension is held constant at the median value. The lighter the color, the higher the probability.\\label{fig:xEffects}"}
@@ -327,22 +329,22 @@ The multinomial model yielded smooth and highly structured probability surfaces 
 \begin{enumerate}
   \item Intentionality × Factivity: Predicted sense membership exhibited a strong left–right division primarily driven by intentionality, with higher intentionality values favoring one sense across the range of factivity.
   
-  \item Intentionality × Pictoriality: Sense 1 was predominantly predicted at low values of both dimensions, whereas sense 2 became increasingly likely as both dimensions increased.
+  \item Intentionality × Pictoriality: Sense 1 was predominantly predicted at low values of both dimensions, whereas Sense 2 became increasingly likely as both dimensions increased.
   
-  \item Factivity × Pictoriality: Sense 1 showed a positive diagonal pattern, indicating increasing probability with jointly higher factivity and pictoriality, while sense 2 was favored under the inverse configuration (high pictoriality, low factivity).
+  \item Factivity × Pictoriality: Sense 1 showed a positive diagonal pattern, indicating increasing probability with jointly higher factivity and pictoriality, while Sense 2 was favored under the inverse configuration (high pictoriality, low factivity).
 \end{enumerate}
 
 The sense annotation based on the GMM were written out to the corpus and subsequently used for a mock-up of the embedding-based analysis.
 
 # Embedding analysis
 
-We analyzed contextual embeddings of sentences containing the word imagine to investigate how different senses of the word are represented in latent space. This embedding analysis explores the geometric structure of the representations, the relationship between semantic similarity and sense membership, and the alignment of embeddings with annotated semantic dimensions. The approach provides a comprehensive view of how contextual usage patterns are captured by the language model (BERT) and how they relate to theoretical distinctions between senses (note that at the moment we use inductive sense distinctions still).
+We analyzed contextual embeddings of sentences containing the term \textit{imagine} to investigate how different senses of the word are represented in latent semantic space. This embedding analysis explores the geometric structure of the representations, the relationship between semantic similarity and sense membership, and the alignment of embeddings with the annotated semantic dimensions. The approach provides a comprehensive view of how contextual usage patterns are captured by the language model (BERT) and how they relate to theoretical distinctions between senses (note that at the moment we use inductive sense distinctions still).
 
 ## Sense overlap based on centroid distance
 
-For each sense, we computed the cosine distance of every *imagine* token embedding to its own sense centroid and to the other sense centroid. We then estimated the kernel density (KDE) distributions of these distances and calculated the overlap between the densities. The resulting overlap scores quantify how well each sense cluster is discriminated from the others in centroid space. The KDE overlap indicates how much a token of a given sense is "closer" or "farther" from its own centroid versus other centroids. High overlap suggests that tokens of that sense are not clearly discriminable from other senses in centroid space. Low overlap indicates that tokens are generally nearer their own centroid, implying clearer separability. Importantly, this metric measures discriminability from cluster centers, not the actual geometric overlap of the clusters themselves. It essentially answers the question: "If I pick a token at random from sense A, how often could it be mistaken for sense B based on centroid proximity?" This approach does not account for the internal distribution of embeddings within a cluster. Two clusters could substantially overlap in the embedding space, yet the distance-to-centroid measure might still suggest low overlap if tokens happen to be near their respective centroids.
+For each sense, we computed the cosine distance of every \textit{imagine} token embedding to its own sense centroid and to the other sense centroid. We then estimated the kernel density (KDE) distributions of these distances and calculated the overlap between the densities. The resulting overlap scores quantify how well each sense cluster is discriminated from the others in centroid space. Importantly, this metric measures discriminability from cluster centers, not the actual geometric overlap of the clusters themselves. It essentially answers the question: "If I pick a token at random from Sense 1, how often could it be mistaken for Sense 2 based on centroid proximity?" This approach does not account for the internal distribution of embeddings within a cluster. Two clusters could substantially overlap in the embedding space, yet the distance-to-centroid measure might still suggest low overlap if tokens happen to be near their respective centroids.
 
-Figure \ref{fig:KDEdistanceCentroid_ownVSother} shows the cosine distance of tokens for each sense to their own sense-centroid and the other sense-centroid. The former is lower than the latter for both senses. However, Sense 1 exhibited a higher KDE overlap (0.445) than Sense 2 (0.341), indicating that tokens of Sense 1 are somewhat less clearly separated from other senses in centroid space than tokens of Sense 2.
+Figure \ref{fig:KDEdistanceCentroid_ownVSother} shows the cosine distance of tokens for each sense to their own sense-centroid and the other sense-centroid. The former is lower than the latter for both senses. However, Sense 1 exhibited a higher KDE overlap (0.445) than Sense 2 (0.341), indicating that tokens of Sense 1 are somewhat less clearly separated from the other other sense in centroid space than tokens of Sense 2.
 
 \begin{figure}
     \centering
@@ -353,7 +355,7 @@ Figure \ref{fig:KDEdistanceCentroid_ownVSother} shows the cosine distance of tok
 
 ## Geometric overlap
 
-To complement the centroid-based distances, we also computed overlap directly on the embedding distributions for each sense. For this, we estimated KDE functions over the embeddings themselves (after 1D and 2D PCA reduction). This yields how much of the geometric ``surface'' of one cluster is occupied by the other. Unlike the centroid-based overlap, which measures discriminability relative to cluster centers, this method captures actual geometric overlap in embedding space. High overlap here indicates that embeddings of the two senses physically occupy the same regions, reflecting semantic entanglement or ambiguity. Low overlap indicates that the clusters are well-separated in latent space, regardless of centroid proximity. Thus, this analysis provides a more direct estimate of semantic distinctiveness at the token level, whereas centroid distances summarize separability from the average cluster location. The overlap in 1D and 2D space is shown in Figure \ref{fig:KDEsurface}. In either space, overlap fraction was roughly symmetric for both senses (1D: 0.296 [sense 1], 0.290 [sense 2]; 2D: 0.233 [sense 1], 0.231 [sense 2]), in contrast to the centroid-based estimation.
+To complement the centroid-based distances, we also computed overlap directly on the embedding distributions for each sense. For this, we estimated KDE functions over the embeddings themselves (after 1D and 2D PCA reduction). This yields how much of the geometric "surface" of one cluster is occupied by the other. Unlike the centroid-based overlap, which measures discriminability relative to cluster centers, this method captures actual geometric overlap in embedding space. High overlap here indicates that embeddings of the two senses physically occupy the same regions, reflecting semantic entanglement or ambiguity. Low overlap indicates that the clusters are well-separated in latent space, regardless of centroid proximity. Thus, this analysis provides a more direct estimate of semantic distinctiveness at the token level, whereas centroid distances summarize separability from the average cluster location. The overlap in 1D and 2D space is shown in Figure \ref{fig:KDEsurface}. In either space, overlap fraction was roughly symmetric for both senses (1D: 0.296 [sense 1], 0.290 [sense 2]; 2D: 0.233 [sense 1], 0.231 [sense 2]), in contrast to the centroid-based estimation.
 
 \begin{figure}
 \centering
@@ -387,10 +389,10 @@ Figure \ref{fig:matrixComparison} shows the distribution of pairwise cosine simi
 
 ## Senses under embedding projection
 
-To examine how sentence embeddings capture the three annotated semantic dimensions (*intentionality*, *factivity*, and *pictoriality*), we trained simple linear regression models predicting each z-scaled dimension from the sentence embeddings. The regression coefficients define a direction in embedding space along which the dimension increases. By projecting each sentence embedding onto these directions, we obtain an embedding-based estimate for that dimension. 
+To examine how sentence embeddings capture the three annotated semantic dimensions (intentionality, factivity, and pictoriality), we trained simple linear regression models predicting each z-scaled dimension from the sentence embeddings. The regression coefficients define a direction in embedding space along which the dimension increases. By projecting each sentence embedding onto these directions, we obtain an embedding-based estimate for that dimension. 
 This procedure was repeated for all three dimensions, resulting in a 3D projection of each sentence in the space spanned by the semantic dimensions.
 
-Let $\mathbf{X} \in \mathbb{R}^{n \times d}$ denote the matrix of sentence embeddings, where $n$ is the number of sentences and $d$ the embedding dimension. Let $\mathbf{y}^{(k)} \in \mathbb{R}^n$ be the vector of z-scaled ratings for semantic dimension $k \in \{\text{intentionality, factivity, pictoriality}\}$. 
+Here is a more detailed rundown of the analysis: Let $\mathbf{X} \in \mathbb{R}^{n \times d}$ denote the matrix of sentence embeddings, where $n$ is the number of sentences and $d$ the embedding dimension. Let $\mathbf{y}^{(k)} \in \mathbb{R}^n$ be the vector of z-scaled ratings for semantic dimension $k \in \{\text{intentionality, factivity, pictoriality}\}$. 
 
 We fit a simple linear regression model for each dimension:
 
@@ -417,7 +419,7 @@ Figure \ref{fig:3Dprojection} shows 3D projection of sentence embeddings onto th
     \label{fig:3Dprojection}
 \end{figure}
 
-Figure \ref{fig:2Dprojection} depicts 2-dimensional for all combinations of dimensions. For projections for factivity and intentionality (Fig. \ref{fig:2D_IF}), sense 1 was predominantly associated with high factivity and low intentionality, whereas sense 2 showed the opposite pattern. Both distributions exhibited slight bimodality. In the pictoriality–intentionality projection (Fig. \ref{fig:2D_IP}), pictoriality contributed minimally, with sense clusters largely segregated along the intentionality axis. In contrast, the pictoriality–factivity projection (Fig. \ref{fig:2D_FP}) revealed substantial overlap between the two senses, indicating that the senses are not well distinguished along this dimension pair. These results suggest that the distinctions between the senses are primarily encoded along the intentionality and factivity dimensions, whereas pictoriality alone does not reliably differentiate sense membership.
+Figure \ref{fig:2Dprojection} depicts 2-dimensional for all combinations of dimensions. The projections for factivity and intentionality (Fig. \ref{fig:2D_IF}) shows that Sense 1 was predominantly associated with high factivity and low intentionality, whereas Sense 2 showed the opposite pattern. Both distributions exhibited slight bimodality, though. In the pictoriality–intentionality projection (Fig. \ref{fig:2D_IP}), pictoriality contributed minimally, with sense clusters largely segregated along the intentionality axis. In contrast, the pictoriality–factivity projection (Fig. \ref{fig:2D_FP}) revealed substantial overlap between the two senses, indicating that the senses are not well distinguished along this dimension pair. These results suggest that the distinctions between the senses are primarily encoded along the intentionality and factivity dimensions, whereas pictoriality does not reliably differentiate sense membership.
 
 \begin{figure}
 \centering
@@ -426,19 +428,19 @@ Figure \ref{fig:2Dprojection} depicts 2-dimensional for all combinations of dime
     \begin{subfigure}[b]{0.30\textwidth}
     \centering
     \includegraphics[width=\textwidth]{../../output/plots/embedding_projection_intentionality_z_factivity_z_2D_core.png}
-    \caption{\label{fig:2D_IF}}
+    \caption{Intentionality $vs$ factivity\label{fig:2D_IF}}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.30\textwidth}
     \centering
     \includegraphics[width=\textwidth]{../../output/plots/embedding_projection_intentionality_z_pictoriality_z_2D_core.png}
-    \caption{\label{fig:2D_IP}}
+    \caption{Intentionality $vs$ pictoriality. \label{fig:2D_IP}}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.30\textwidth}
     \centering
     \includegraphics[width=\textwidth]{../../output/plots/embedding_projection_factivity_z_pictoriality_z_2D_core.png}
-    \caption{\label{fig:2D_FP}}
+    \caption{Factivity $vs$ pictoriality. \label{fig:2D_FP}}
     \end{subfigure}
 \end{figure}
 
