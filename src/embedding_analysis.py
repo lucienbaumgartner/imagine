@@ -178,7 +178,7 @@ distance_df.to_pickle("../output/data/imagine_token_distance_distributions.pkl")
 overlap_scores = {}
 
 plt.figure(figsize=(8, 6))
-colors = sns.color_palette("Set2", n_colors=len(distance_df['sense'].unique()))
+colors = ["#F8766D", "#00BFC4"]
 
 for i, sense in enumerate(sorted(distance_df['sense'].unique())):
     own_dist = distance_df[(distance_df['sense'] == sense) & (distance_df['type'] == "own_centroid")][
@@ -225,10 +225,10 @@ print("Overlap estimates saved to ../output/stats/overlap_density_estimates.txt"
 
 senses = imagine_df['sense'].unique()
 dims_to_run = [1, 2]  # 1D and 2D KDEs
-colors = sns.color_palette("magma", len(senses))
+colors = ["#F8766D", "#00BFC4"]  # Distinct colors for each sense
 
 for n_dim in dims_to_run:
-    # PCA reduction if needed
+    # --- PCA reduction if needed ---
     emb_matrix = np.stack(imagine_df['embedding'].values)
     if n_dim < emb_matrix.shape[1]:
         pca = PCA(n_components=n_dim)
@@ -236,13 +236,13 @@ for n_dim in dims_to_run:
     else:
         emb_reduced = emb_matrix
 
-    # Add reduced dimensions to dataframe
+    # --- Add reduced dimensions to dataframe ---
     dim_cols = [f"dim{i+1}" for i in range(n_dim)]
     emb_df = imagine_df.copy()
     for i, col in enumerate(dim_cols):
         emb_df[col] = emb_reduced[:, i]
 
-    # Prepare grid for KDE evaluation
+    # --- Prepare grid for KDE evaluation ---
     if n_dim == 1:
         xs = np.linspace(emb_df['dim1'].min(), emb_df['dim1'].max(), 200)
     elif n_dim == 2:
@@ -252,7 +252,7 @@ for n_dim in dims_to_run:
                              np.linspace(y_min, y_max, 100))
         grid_points = np.vstack([xx.ravel(), yy.ravel()])
 
-    # Compute sense-specific overlap fractions
+    # --- Compute sense-specific overlap fractions ---
     overlap_scores = {}
     for sense1, sense2 in combinations(senses, 2):
         data1 = emb_df[emb_df['sense'] == sense1][dim_cols].values.T
@@ -275,39 +275,46 @@ for n_dim in dims_to_run:
             dx = (x_max - x_min) / (xx.shape[1] - 1)
             dy = (y_max - y_min) / (xx.shape[0] - 1)
             area = dx * dy
-
             total_area1 = np.sum(density1) * area
             total_area2 = np.sum(density2) * area
             overlap_area = np.sum(min_density) * area
-
             overlap_1 = overlap_area / total_area1
             overlap_2 = overlap_area / total_area2
 
         overlap_scores[f"{sense1} over {sense2}"] = overlap_1
         overlap_scores[f"{sense2} over {sense1}"] = overlap_2
 
-    # Plot all senses
+    # --- Plot all senses with shaded overlap ---
     plt.figure(figsize=(8, 4) if n_dim == 1 else (6, 6))
-    for i, sense in enumerate(senses):
-        data = emb_df[emb_df['sense'] == sense][dim_cols].values.T
-        kde = gaussian_kde(data)
-        if n_dim == 1:
-            plt.plot(xs, kde(xs), color=colors[i], label=f'Sense {sense}')
-        else:
-            Z = kde(grid_points).reshape(xx.shape)
-            plt.contour(xx, yy, Z, levels=5, colors=[colors[i]], alpha=0.7)
 
-    plt.xlabel("Dim 1" if n_dim == 1 else "PC1")
-    if n_dim >= 2:
-        plt.ylabel("Dim 2")
-    # plt.title(f"{n_dim}D KDE sense-specific overlaps")
     if n_dim == 1:
+        # Plot KDEs
+        for i, sense in enumerate(senses):
+            kde = gaussian_kde(emb_df[emb_df['sense'] == sense][dim_cols].values.T)
+            density = kde(xs)
+            plt.plot(xs, density, color=colors[i], label=f'Sense {sense}')
+        # Shaded overlap
+        plt.fill_between(xs, 0, min_density, color='grey', alpha=0.4, label='Overlap')
+        plt.xlabel("Dim 1")
+        plt.ylabel("Density")
         plt.legend()
+    else:
+        # 2D contours for senses
+        Z1 = gaussian_kde(emb_df[emb_df['sense'] == senses[0]][dim_cols].values.T)(grid_points).reshape(xx.shape)
+        Z2 = gaussian_kde(emb_df[emb_df['sense'] == senses[1]][dim_cols].values.T)(grid_points).reshape(xx.shape)
+        # Individual contour lines
+        plt.contour(xx, yy, Z1, levels=5, colors=[colors[0]], alpha=0.7)
+        plt.contour(xx, yy, Z2, levels=5, colors=[colors[1]], alpha=0.7)
+        # Shaded overlap
+        plt.contourf(xx, yy, min_density, levels=20, cmap='Greys', alpha=0.4)
+        plt.xlabel("PC1")
+        plt.ylabel("PC2")
+
     plt.tight_layout()
-    plt.savefig(f"../output/plots/kde{n_dim}D_embeddings.png", dpi=300)
+    plt.savefig(f"../output/plots/kde{n_dim}D_embeddings_overlap.png", dpi=300)
     plt.close()
 
-    # Save overlap scores
+    # --- Save overlap scores ---
     with open(f"../output/stats/kde{n_dim}D_sense_specific_overlap_embeddings.txt", "w") as f:
         for pair, score in overlap_scores.items():
             f.write(f"{pair}\t{score:.4f}\n")
@@ -405,7 +412,7 @@ fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(111, projection='3d')
 
 senses = proj_df['sense'].unique()
-colors = sns.color_palette("magma", len(senses))
+colors = ["#F8766D", "#00BFC4"]  # Distinct colors for each sense
 
 for i, sense in enumerate(senses):
     subset = proj_df[proj_df['sense'] == sense]
@@ -433,7 +440,7 @@ import matplotlib.patches as mpatches
 
 dim_pairs = list(combinations(['intentionality_z', 'factivity_z', 'pictoriality_z'], 2))
 senses = proj_df['sense'].unique()
-sense_colors = ["#D73027", "#4575B4"]  # strong red and blue
+colors = ["#F8766D", "#00BFC4"]  # Distinct colors for each sense
 
 for dim_x, dim_y in dim_pairs:
     plt.figure(figsize=(6, 6))
@@ -450,12 +457,12 @@ for dim_x, dim_y in dim_pairs:
             fill=True,
             thresh=0.05,  # ignore densities below 5% of max
             levels=50,    # smoother inner shapes
-            color=sense_colors[i],
+            color=colors[i],
             alpha=0.5,
             ax=ax
         )
 
-        legend_patches.append(mpatches.Patch(color=sense_colors[i], label=f"Sense {sense}"))
+        legend_patches.append(mpatches.Patch(color=colors[i], label=f"Sense {sense}"))
 
     plt.xlabel(f"{dim_x.replace('_z','').capitalize()} (z-score)")
     plt.ylabel(f"{dim_y.replace('_z','').capitalize()} (z-score)")

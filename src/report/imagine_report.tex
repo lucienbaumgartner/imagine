@@ -36,7 +36,7 @@
   \KOMAoptions{parskip=half}}
 \makeatother
 \usepackage{xcolor}
-\usepackage[margin=1in]{geometry}
+\usepackage[left=1.75in, right=1.75in, top=1in, bottom=1in]{geometry}
 \usepackage{longtable,booktabs,array}
 \usepackage{calc} % for calculating minipage widths
 % Correct order of tables after \paragraph or \subparagraph
@@ -77,6 +77,8 @@
 \usepackage{float}
 \floatplacement{figure}{H}
 \usepackage{subcaption}
+\usepackage{caption}
+\captionsetup[figure]{skip=0.5em}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -103,43 +105,24 @@
 
 \title{Imagine -- An Exploratory Analysis}
 \author{}
-\date{\vspace{-2.5em}2026-03-10}
+\date{\vspace{-2.5em}2026-03-11}
 
 \begin{document}
 \maketitle
 
-\subsubsection{Before we start}\label{before-we-start}
+\section{Sense annotation}\label{sense-annotation}
 
-The data used in this report is the same you used for your analysis. I
-used the mean ratings for each dimension (factivity, intentionality,
-pictoriality) and scaled them. In the upcoming weeks, I will also adapt
-the scripts as to use the ratings of both coders to account for
-between-coder variance. I just didn't have the time to do everything.
-Since manual sense annotations are not yet available, I wrote the
-pipeline based on a clustering of the the data on the three provided
-annotation dimensions. We can later just replace them with the actual
-annotations.
+\subsection{Latent Structure
+Estimation}\label{latent-structure-estimation}
 
-\subsubsection{Pre-analysis}\label{pre-analysis}
-
-Table \ref{tab:pairwisePearsonDimensions}.
-
-\begin{table}[H]
-\centering
-\caption{\label{tab:pairwisePearsonDimensions}Pairwise Pearson Correlation}
-\centering
-\begin{tabular}[t]{lrrr}
-\toprule
-  & intentionality & factivity & pictoriality\\
-\midrule
-intentionality & 1 & -0.242 & 0.374\\
-factivity &  & 1.000 & -0.222\\
-pictoriality &  &  & 1.000\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Figure \ref{fig:gmmBIC}
+To estimate the latent sense structure, the three-dimensional annotation
+space was standardized and modeled using Gaussian mixture models (GMMs).
+Model selection was guided by Bayesian Information Criterion (BIC)
+comparisons across candidate solutions with differing numbers of
+components. Across most BIC variants, a 2-component solution was
+preferred over a single-component solution, whereas solutions with three
+components were not consistently but robustly favored (Figure
+\ref{fig:gmmBIC}).
 
 \begin{figure}
 \centering
@@ -147,7 +130,17 @@ Figure \ref{fig:gmmBIC}
 \caption{BIC for Gaussian mixture models.\label{fig:gmmBIC}}
 \end{figure}
 
-Figure \ref{fig:pcaGMM}.
+For the purposes of this mock-up analysis, we nonetheless adopted a
+2-component solution, interpreting each component as a distinct
+hypothesized sense of imagine. To visualize separability, principal
+component analysis (PCA) was applied to the standardized annotation
+space, and cluster assignments were projected onto the first two
+principal components. The 2-component Gaussian mixture model identified
+two clusters that were clearly separable in the reduced two-dimensional
+PCA space (see Figure \ref{fig:pcaGMM}). Visual inspection indicates no
+overlap between clusters, suggesting that the three annotation
+dimensions jointly support a coherent partitioning of the data into two
+latent sense groupings.
 
 \begin{figure}
 \centering
@@ -156,14 +149,40 @@ Figure \ref{fig:pcaGMM}.
 clusters.\label{fig:pcaGMM}}
 \end{figure}
 
-\begin{figure}
+\subsection{Predictive Modeling of Sense
+Membership}\label{predictive-modeling-of-sense-membership}
 
-{\centering \includegraphics[width=.32\linewidth]{imagine_report_files/figure-latex/unnamed-chunk-6-1} \includegraphics[width=.32\linewidth]{imagine_report_files/figure-latex/unnamed-chunk-6-2} \includegraphics[width=.32\linewidth]{imagine_report_files/figure-latex/unnamed-chunk-6-3} 
+To characterize how annotation dimensions jointly predict latent sense
+membership, we fit a multinomial generalized linear model with ridge
+(L2) regularization. Cluster assignment from the GMM served as the
+dependent variable. Predictors included all three annotation dimensions
+and their pairwise interactions. Regularization strength was selected
+via cross-validation to promote coefficient stability. Because latent
+sense labels were constructed via clustering in the same annotation
+space used as predictors, the observed predictive performance does not
+provide independent evidence about the determinants of sense membership.
+Rather, the multinomial model serves a descriptive role, summarizing how
+hypothesized senses of \emph{imagine} are distributed across the joint
+space defined by intentionality, factivity, and pictoriality.
+Accordingly, coefficient estimates and performance metrics are
+interpreted as characterizations of the induced partition rather than as
+inferential tests.
 
-}
+The multinomial model demonstrated high apparent classification
+performance, with a cross-validated accuracy of 98.3\%, with an optimal
+\(\lambda\)=0.041. This level of performance is expected, given that
+latent sense labels were derived from the same annotation dimensions
+used as predictors. Predicted sense assignments were associated with
+high posterior concentration, with a median maximum predicted
+probability of 0.97 (IQR=0.03), indicating that most observations were
+assigned to a sense with high model confidence.
 
-\caption{Predicted sense probability based on GLM with ridge regularization for 2-way interactions. The third dimension is held constant at the median value.The lighter the color, the higher the probability.\label{fig:xEffects}}\label{fig:unnamed-chunk-6}
-\end{figure}
+As a robustness check, we assessed coefficient stability using
+nonparametric bootstrapping (500 resamples). Bootstrap confidence
+intervals were narrow across main effects and interactions (Figure
+\ref{fig:bootstrapping}), indicating that the fitted probability
+surfaces were numerically stable under resampling. All predictors had
+perfect stability across iterations (none of them was ever dropped).
 
 \begin{figure}
 \centering
@@ -172,40 +191,148 @@ clusters.\label{fig:pcaGMM}}
 CI.\label{fig:bootstrapping}}
 \end{figure}
 
+Predicted probabilities based on the optimal model were generated across
+the observed range of each pair of annotation dimensions while holding
+the third dimension constant at its median. These predictions were
+visualized in Figure \ref{fig:xEffects} as two-dimensional heatmaps to
+facilitate interpretation of interaction patterns.
+
+\begin{figure}
+
+{\centering \includegraphics[width=.32\linewidth]{imagine_report_files/figure-latex/unnamed-chunk-8-1} \includegraphics[width=.32\linewidth]{imagine_report_files/figure-latex/unnamed-chunk-8-2} \includegraphics[width=.32\linewidth]{imagine_report_files/figure-latex/unnamed-chunk-8-3} 
+
+}
+
+\caption{Predicted sense probability based on GLM with ridge regularization for 2-way interactions. The third dimension is held constant at the median value. The lighter the color, the higher the probability.\label{fig:xEffects}}\label{fig:unnamed-chunk-8}
+\end{figure}
+
+The multinomial model yielded smooth and highly structured probability
+surfaces across all pairs of annotation dimensions. Distinct patterns
+were observed:
+
+\begin{enumerate}
+  \item Intentionality × Factivity: Predicted sense membership exhibited a strong left–right division primarily driven by intentionality, with higher intentionality values favoring one sense across the range of factivity.
+  
+  \item Intentionality × Pictoriality: Sense 1 was predominantly predicted at low values of both dimensions, whereas sense 2 became increasingly likely as both dimensions increased.
+  
+  \item Factivity × Pictoriality: Sense 1 showed a positive diagonal pattern, indicating increasing probability with jointly higher factivity and pictoriality, while sense 2 was favored under the inverse configuration (high pictoriality, low factivity).
+\end{enumerate}
+
+The sense annotation based on the GMM were written out to the corpus and
+subsequently used for a mock-up of the embedding-based analysis.
+
 \section{Embedding analysis}\label{embedding-analysis}
 
-\subsection{Centroids}\label{centroids}
+\subsection{Sense overlap based on centroid
+distance}\label{sense-overlap-based-on-centroid-distance}
+
+For each sense, we computed the cosine distance of every \emph{imagine}
+token embedding to its own sense centroid and to the other sense
+centroid. We then estimated the kernel density (KDE) distributions of
+these distances and calculated the overlap between the densities. The
+resulting overlap scores quantify how well each sense cluster is
+discriminated from the others in centroid space. The KDE overlap
+indicates how much a token of a given sense is ``closer'' or ``farther''
+from its own centroid versus other centroids. High overlap suggests that
+tokens of that sense are not clearly discriminable from other senses in
+centroid space. Low overlap indicates that tokens are generally nearer
+their own centroid, implying clearer separability. Importantly, this
+metric measures discriminability from cluster centers, not the actual
+geometric overlap of the clusters themselves. It essentially answers the
+question: ``If I pick a token at random from sense A, how often could it
+be mistaken for sense B based on centroid proximity?'' This approach
+does not account for the internal distribution of embeddings within a
+cluster. Two clusters could substantially overlap in the embedding
+space, yet the distance-to-centroid measure might still suggest low
+overlap if tokens happen to be near their respective centroids.
+
+Figure \ref{fig:KDEdistanceCentroid_ownVSother} shows the cosine
+distance of tokens for each sense to their own sense-centroid and the
+other sense-centroid. The former is lower than the latter for both
+senses. However, Sense 1 exhibited a higher KDE overlap (0.445) than
+Sense 2 (0.341), indicating that tokens of Sense 1 are somewhat less
+clearly separated from other senses in centroid space than tokens of
+Sense 2.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.5\linewidth]{../../output/plots/overlap_density.png}
-    \caption{Caption}
-    \label{fig:placeholder}
+    \caption{Centroid-based overlap.}
+    \label{fig:KDEdistanceCentroid_ownVSother}
 \end{figure}
+
+\subsection{Geometric overlap}\label{geometric-overlap}
+
+To complement the centroid-based distances, we also computed overlap
+directly on the embedding distributions for each sense. For this, we
+estimated KDE functions over the embeddings themselves (after 1D and 2D
+PCA reduction). This yields how much of the geometric ``surface'\,' of
+one cluster is occupied by the other. Unlike the centroid-based overlap,
+which measures discriminability relative to cluster centers, this method
+captures actual geometric overlap in embedding space. High overlap here
+indicates that embeddings of the two senses physically occupy the same
+regions, reflecting semantic entanglement or ambiguity. Low overlap
+indicates that the clusters are well-separated in latent space,
+regardless of centroid proximity. Thus, this analysis provides a more
+direct estimate of semantic distinctiveness at the token level, whereas
+centroid distances summarize separability from the average cluster
+location. The overlap in 1D and 2D space is shown in Figure
+\ref{fig:KDEsurface}. In either space, overlap fraction was roughly
+symmetric for both senses (1D: 0.296 {[}sense 1{]}, 0.290 {[}sense 2{]};
+2D: 0.233 {[}sense 1{]}, 0.231 {[}sense 2{]}), in contrast to the
+centroid-based estimation.
 
 \begin{figure}
 \centering
+    \caption{Geometric overlap in embedding space. The grey areas mark the overlaps.}
+    \label{fig:KDEsurface}
     \begin{subfigure}[b]{0.6\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{../../output/plots/kde1D_embeddings.png}
-    \caption{\label{fig:image1}}
+    \includegraphics[width=\textwidth]{../../output/plots/kde1D_embeddings_overlap.png}
+    \caption{\label{fig:KDEsurface1D}}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.38\textwidth}
     \centering
-    \includegraphics[width=0.9\textwidth]{../../output/plots/kde2D_embeddings.png}
-    \caption{\label{fig:image2}}
+    \includegraphics[width=0.9\textwidth]{../../output/plots/kde2D_embeddings_overlap.png}
+    \caption{\label{fig:KDEsurface1D}}
     \end{subfigure}
 \end{figure}
 
 \subsection{Embedding similarity vs sense
 similarity}\label{embedding-similarity-vs-sense-similarity}
 
+To examine whether sentence embeddings capture sense membership, we
+computed pairwise cosine similarities between all sentence embeddings.
+For comparison, a binary matrix indicated whether each sentence pair
+belonged to the same annotated sense (1) or different senses (0). We
+then correlated the upper-triangle values of the embedding similarity
+matrix with the corresponding sense similarity values using Spearman's
+rank correlation. Visualization of the results was achieved by plotting
+KDE of embedding similarities for sentence pairs with the same sense
+versus different senses. Higher cosine similarity for same-sense pairs
+relative to different-sense pairs indicates that embeddings encode
+semantic sense information. The Spearman correlation quantifies the
+degree to which semantic closeness in embedding space aligns with sense
+membership, providing a global measure of clustering in the latent
+space. Unlike centroid-based or geometric overlap, this is a global,
+distribution-agnostic summary statistic: it does not explicitly consider
+clusters or shapes, only relative similarity between pairs of sentences.
+
+Figure \ref{fig:matrixComparison} shows the distribution of pairwise
+cosine similarities between sentence embeddings, separated by whether
+the sentences share the same sense (red) or have different senses
+(blue). Embeddings of sentences with the same sense tend to be more
+similar, as evidenced by the right-shifted red distribution relative to
+the blue distribution. This pattern is quantified by a Spearman
+correlation of \(\rho = 0.427\) (\(p < 0.001\)), indicating a moderate
+positive association between embedding similarity and sense membership.
+
 \begin{figure}
     \centering
     \includegraphics[width=0.5\linewidth]{../../output/plots/embedding_vs_sense_similarity.png}
-    \caption{Caption}
-    \label{fig:placeholder}
+    \caption{Cosine similarity between same-sense and other-sense tokens of \textit{imagine}.}
+    \label{fig:matrixComparison}
 \end{figure}
 
 \subsection{Senses under embedding
@@ -269,7 +396,7 @@ annotated in the dataset.
 \begin{figure}
     \centering
     \includegraphics[width=0.5\linewidth]{../../output/plots/embedding_projection_3D.png}
-    \caption{3D embedding projections. Dimensions have been rescaled to $z$-scores.}
+    \caption{3D embedding projections.}
     \label{fig:3Dprojection}
 \end{figure}
 
@@ -290,7 +417,7 @@ alone does not reliably differentiate sense membership.
 
 \begin{figure}
 \centering
-    \caption{2D embedding projections. Dimensions have been rescaled to $z$-scores.}
+    \caption{2D embedding projections.}
     \label{fig:2Dprojection}
     \begin{subfigure}[b]{0.30\textwidth}
     \centering

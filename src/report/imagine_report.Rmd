@@ -4,6 +4,7 @@ output:
   pdf_document:
     keep_tex: true
     citation_package: natbib
+geometry: left=1.75in, right=1.75in, top=1in, bottom=1in
 biblio-style: apalike
 tables: true
 header-includes: 
@@ -18,6 +19,8 @@ header-includes:
   - \usepackage{float} #use the 'float' package
   - \floatplacement{figure}{H} #make every figure with caption = h
   - \usepackage{subcaption}
+  - \usepackage{caption}
+  - \captionsetup[figure]{skip=0.5em} 
 date: "`r Sys.Date()`"
 bibliography: hb.bib
 ---
@@ -27,11 +30,11 @@ knitr::opts_chunk$set(echo = F, message = F, warning = F)
 options(knitr.kable.NA = '')
 ```
 
-### Before we start
+# Sense annotation
 
-The data used in this report is the same you used for your analysis. I used the mean ratings for each dimension (factivity, intentionality, pictoriality) and scaled them. In the upcoming weeks, I will also adapt the scripts as to use the ratings of both coders to account for between-coder variance. I just didn't have the time to do everything. Since manual sense annotations are not yet available, I wrote the pipeline based on a clustering of the the data on the three provided annotation dimensions. We can later just replace them with the actual annotations.
+## Latent Structure Estimation
 
-### Pre-analysis
+To estimate the latent sense structure, the three-dimensional annotation space was standardized and modeled using Gaussian mixture models (GMMs). Model selection was guided by Bayesian Information Criterion (BIC) comparisons across candidate solutions with differing numbers of components. Across most BIC variants, a 2-component solution was preferred over a single-component solution, whereas solutions with three components were not consistently but robustly favored (Figure \ref{fig:gmmBIC}).
 
 ```{r}
 library(readxl)
@@ -51,9 +54,6 @@ rm(list = ls())
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 ```
 
-
-Table \ref{tab:pairwisePearsonDimensions}.
-
 ```{r}
 # Load data
 df <- read_xlsx("../../input/corpus_annotated.xlsx", sheet = 1)
@@ -66,13 +66,6 @@ df <- na.omit(df)
 # Select only the annotation dimensions
 annot <- df %>%
   select(intentionality, factivity, pictoriality)
-
-# Pairwise correlations
-pairwiseCor <- round(cor(annot, use = "pairwise.complete.obs"), 3)
-pairwiseCor[lower.tri(pairwiseCor, diag = F)] <- NA
-
-# Table
-kable(pairwiseCor, booktabs = TRUE, caption = "Pairwise Pearson Correlation", label = "pairwisePearsonDimensions", format = "latex") %>% kable_styling(latex_options = "HOLD_position")
 ```
 
 ```{r}
@@ -80,10 +73,9 @@ kable(pairwiseCor, booktabs = TRUE, caption = "Pairwise Pearson Correlation", la
 annot_z <- as.data.frame(scale(annot))
 ```
 
-Figure \ref{fig:gmmBIC}
 
-```{r fig.width=6, fig.height=4, fig.pos="h", fig.cap="BIC for Gaussian mixture models.\\label{fig:gmmBIC}"}
-par(cex.axis = 0.75, cex.lab  = 0.75, mgp = c(2, 0.7, 0))
+```{r fig.width=6, fig.height=3, fig.pos="h", fig.cap="BIC for Gaussian mixture models.\\label{fig:gmmBIC}"}
+par(cex.axis = 0.75, cex.lab  = 0.75, mgp = c(2, 0.7, 0), mar = c(3, 4, 4, 2) + 0.1)
 ## Clustering
 # 1- vs 2- vs 3-component solution
 gmm_res <- Mclust(annot_z, G = 1:3)
@@ -94,10 +86,9 @@ plot(gmm_res, what = "BIC",
      )
 ```
 
+For the purposes of this mock-up analysis, we nonetheless adopted a 2-component solution, interpreting each component as a distinct hypothesized sense of imagine. To visualize separability, principal component analysis (PCA) was applied to the standardized annotation space, and cluster assignments were projected onto the first two principal components. The 2-component Gaussian mixture model identified two clusters that were clearly separable in the reduced two-dimensional PCA space (see Figure \ref{fig:pcaGMM}). Visual inspection indicates no overlap between clusters, suggesting that the three annotation dimensions jointly support a coherent partitioning of the data into two latent sense groupings.
 
-Figure \ref{fig:pcaGMM}.
-
-```{r fig.width=4, fig.height=3, fig.pos="h", fig.cap="PCA of annotation space with latent sense clusters.\\label{fig:pcaGMM}"}
+```{r fig.width=3.5, fig.height=2.5, fig.pos="h", fig.cap="PCA of annotation space with latent sense clusters.\\label{fig:pcaGMM}"}
 # option with three clusters is preferred, but we use a two-cluster solution for the mock up
 
 # 2-component solution
@@ -127,8 +118,11 @@ ggplot(pca_res, aes(PC1, PC2, color = as.factor(paste0("sense ", sense)))) +
   theme_classic()
 ```
 
+## Predictive Modeling of Sense Membership
 
-```{r out.width='.32\\linewidth', fig.width=3, fig.height=3, fig.show='hold', fig.align='center', fig.cap="Predicted sense probability based on GLM with ridge regularization for 2-way interactions. The third dimension is held constant at the median value.The lighter the color, the higher the probability.\\label{fig:xEffects}"}
+To characterize how annotation dimensions jointly predict latent sense membership, we fit a multinomial generalized linear model with ridge (L2) regularization. Cluster assignment from the GMM served as the dependent variable. Predictors included all three annotation dimensions and their pairwise interactions. Regularization strength was selected via cross-validation to promote coefficient stability. Because latent sense labels were constructed via clustering in the same annotation space used as predictors, the observed predictive performance does not provide independent evidence about the determinants of sense membership. Rather, the multinomial model serves a descriptive role, summarizing how hypothesized senses of *imagine* are distributed across the joint space defined by intentionality, factivity, and pictoriality. Accordingly, coefficient estimates and performance metrics are interpreted as characterizations of the induced partition rather than as inferential tests.
+
+```{r}
 ### GLM with ridge regularization
 # Fit multinomial regression with 2-way interactions as IV L2 (ridge) regularization for stability
 y <- as.factor(paste0("sense ", annot_z$sense))
@@ -145,67 +139,47 @@ coefs_df <- do.call(rbind, lapply(names(coefs), function(cluster){
              coef = as.numeric(coefs[[cluster]]))
 }))
 
-# Plot interactions
-vars <- c("intentionality", "factivity", "pictoriality")
-pairs <- combn(vars, 2, simplify = FALSE)
+# Predicted class labels at optimal lambda
+pred_class <- predict(
+  cv_fit_int,
+  newx = x_int,
+  s = best_lambda,
+  type = "class"
+)
 
-plots <- list()
+# Observed labels
+obs_class <- y
 
-for (vp in pairs) {
-  x_var <- vp[1]
-  y_var <- vp[2]
-  fix_var <- setdiff(vars, vp)
-  
-  # Build grid manually
-  grid <- expand.grid(
-    seq(min(annot_z[[x_var]]), max(annot_z[[x_var]]), length.out = 50),
-    seq(min(annot_z[[y_var]]), max(annot_z[[y_var]]), length.out = 50)
-  )
-  colnames(grid) <- c(x_var, y_var)
-  
-  # Add fixed variable at its median
-  grid[[fix_var]] <- median(annot_z[[fix_var]])
-  
-  # Model matrix
-  grid_mm <- model.matrix(~ (intentionality + factivity + pictoriality)^2, data = grid)[,-1]
-  
-  # Predicted probabilities
-  probs <- predict(cv_fit_int, newx = grid_mm, type = "response", s = best_lambda)
-  probs <- as.data.frame(probs[,,1])
-  colnames(probs) <- levels(y)
-  grid <- cbind(grid, probs)
-  
-  # Long format
-  grid_long <- pivot_longer(grid, cols = colnames(probs), names_to = "cluster", values_to = "prob") %>%
-    group_by(cluster) %>%
-    mutate(prob_scaled = rescale(prob)) %>%
-    ungroup()
-  
-  # Heatmap plot
-  p <- ggplot(grid_long, aes_string(x = x_var, y = y_var, fill = "prob_scaled")) +
-    geom_raster() +
-    facet_wrap(~ cluster, ncol = 1) +
-    scale_fill_viridis_c(option = "magma") +
-    labs(x = paste0(x_var, " (z-score)"),
-         y = paste0(y_var, " (z-score)"),
-         fill = "Predicted probability",
-         #title = paste("Cluster probabilities:", x_var, "vs", y_var)
-         ) +
-    scale_y_continuous(expand = c(0,0)) +
-    scale_x_continuous(expand = c(0,0)) +
-    theme_light() +
-    theme(
-      panel.grid = element_blank(),
-      legend.position = "none"
-    )
+# Accuracy
+glm_accuracy <- mean(pred_class == obs_class)
 
-  plots[[paste(x_var, y_var, sep = "_")]] <- p
-}
+# Misclassification rate
+glm_error <- 1 - glm_accuracy
 
-plots$intentionality_factivity
-plots$intentionality_pictoriality
-plots$factivity_pictoriality
+# Confusion matrix (optional, not printed by default)
+glm_confusion <- table(Observed = obs_class, Predicted = pred_class)
+
+## Posterior probability concentration
+# Predicted probabilities for observed data
+pred_probs <- predict(
+  cv_fit_int,
+  newx = x_int,
+  s = best_lambda,
+  type = "response"
+)
+
+# Extract maximum predicted probability per observation
+max_prob <- apply(pred_probs[,,1], 1, max)
+
+# Summary statistics
+median_max_prob <- median(max_prob)
+iqr_max_prob <- IQR(max_prob)
 ```
+
+The multinomial model demonstrated high apparent classification performance, with a cross-validated accuracy of `r round(glm_accuracy * 100, 1)`%, with an optimal $\lambda$=`r round(best_lambda, 3)`. This level of performance is expected, given that latent sense labels were derived from the same annotation dimensions used as predictors. Predicted sense assignments were associated with high posterior concentration, with a median maximum predicted probability of `r round(median_max_prob, 2)` (IQR=`r round(iqr_max_prob, 2)`), indicating that most observations were assigned to a sense with high model confidence.
+
+As a robustness check, we assessed coefficient stability using nonparametric bootstrapping (500 resamples). Bootstrap confidence intervals were narrow across main effects and interactions (Figure \ref{fig:bootstrapping}), indicating that the fitted probability surfaces were numerically stable under resampling. All predictors had perfect stability across iterations (none of them was ever dropped).
+
 ```{r fig.width=5, fig.height=2, fig.pos="h", fig.cap="Bootstrapped Coefficients (n = 500) with 95% CI.\\label{fig:bootstrapping}"}
 # Robustness check via bootstrapping
 n_boot <- 500
@@ -282,39 +256,130 @@ ggplot(coef_df, aes(x = term, y = median, color = cluster)) +
 
 ```
 
+Predicted probabilities based on the optimal model were generated across the observed range of each pair of annotation dimensions while holding the third dimension constant at its median. These predictions were visualized in Figure \ref{fig:xEffects} as two-dimensional heatmaps to facilitate interpretation of interaction patterns.
+
+```{r out.width='.32\\linewidth', fig.width=3, fig.height=3, fig.show='hold', fig.align='center', fig.cap="Predicted sense probability based on GLM with ridge regularization for 2-way interactions. The third dimension is held constant at the median value. The lighter the color, the higher the probability.\\label{fig:xEffects}"}
+# Plot interactions
+vars <- c("intentionality", "factivity", "pictoriality")
+pairs <- combn(vars, 2, simplify = FALSE)
+
+plots <- list()
+
+for (vp in pairs) {
+  x_var <- vp[1]
+  y_var <- vp[2]
+  fix_var <- setdiff(vars, vp)
+  
+  # Build grid manually
+  grid <- expand.grid(
+    seq(min(annot_z[[x_var]]), max(annot_z[[x_var]]), length.out = 50),
+    seq(min(annot_z[[y_var]]), max(annot_z[[y_var]]), length.out = 50)
+  )
+  colnames(grid) <- c(x_var, y_var)
+  
+  # Add fixed variable at its median
+  grid[[fix_var]] <- median(annot_z[[fix_var]])
+  
+  # Model matrix
+  grid_mm <- model.matrix(~ (intentionality + factivity + pictoriality)^2, data = grid)[,-1]
+  
+  # Predicted probabilities
+  probs <- predict(cv_fit_int, newx = grid_mm, type = "response", s = best_lambda)
+  probs <- as.data.frame(probs[,,1])
+  colnames(probs) <- levels(y)
+  grid <- cbind(grid, probs)
+  
+  # Long format
+  grid_long <- pivot_longer(grid, cols = colnames(probs), names_to = "cluster", values_to = "prob") %>%
+    group_by(cluster) %>%
+    mutate(prob_scaled = rescale(prob)) %>%
+    ungroup()
+  
+  # Heatmap plot
+  p <- ggplot(grid_long, aes_string(x = x_var, y = y_var, fill = "prob_scaled")) +
+    geom_raster() +
+    facet_wrap(~ cluster, ncol = 1) +
+    scale_fill_viridis_c(option = "magma") +
+    labs(x = paste0(x_var, " (z-score)"),
+         y = paste0(y_var, " (z-score)"),
+         fill = "Predicted probability",
+         #title = paste("Cluster probabilities:", x_var, "vs", y_var)
+         ) +
+    scale_y_continuous(expand = c(0,0)) +
+    scale_x_continuous(expand = c(0,0)) +
+    theme_light() +
+    theme(
+      panel.grid = element_blank(),
+      legend.position = "none"
+    )
+
+  plots[[paste(x_var, y_var, sep = "_")]] <- p
+}
+
+plots$intentionality_factivity
+plots$intentionality_pictoriality
+plots$factivity_pictoriality
+```
+
+The multinomial model yielded smooth and highly structured probability surfaces across all pairs of annotation dimensions. Distinct patterns were observed:
+
+\begin{enumerate}
+  \item Intentionality × Factivity: Predicted sense membership exhibited a strong left–right division primarily driven by intentionality, with higher intentionality values favoring one sense across the range of factivity.
+  
+  \item Intentionality × Pictoriality: Sense 1 was predominantly predicted at low values of both dimensions, whereas sense 2 became increasingly likely as both dimensions increased.
+  
+  \item Factivity × Pictoriality: Sense 1 showed a positive diagonal pattern, indicating increasing probability with jointly higher factivity and pictoriality, while sense 2 was favored under the inverse configuration (high pictoriality, low factivity).
+\end{enumerate}
+
+The sense annotation based on the GMM were written out to the corpus and subsequently used for a mock-up of the embedding-based analysis.
+
 # Embedding analysis
 
-## Centroids
+## Sense overlap based on centroid distance
+
+For each sense, we computed the cosine distance of every *imagine* token embedding to its own sense centroid and to the other sense centroid. We then estimated the kernel density (KDE) distributions of these distances and calculated the overlap between the densities. The resulting overlap scores quantify how well each sense cluster is discriminated from the others in centroid space. The KDE overlap indicates how much a token of a given sense is "closer" or "farther" from its own centroid versus other centroids. High overlap suggests that tokens of that sense are not clearly discriminable from other senses in centroid space. Low overlap indicates that tokens are generally nearer their own centroid, implying clearer separability. Importantly, this metric measures discriminability from cluster centers, not the actual geometric overlap of the clusters themselves. It essentially answers the question: "If I pick a token at random from sense A, how often could it be mistaken for sense B based on centroid proximity?" This approach does not account for the internal distribution of embeddings within a cluster. Two clusters could substantially overlap in the embedding space, yet the distance-to-centroid measure might still suggest low overlap if tokens happen to be near their respective centroids.
+
+Figure \ref{fig:KDEdistanceCentroid_ownVSother} shows the cosine distance of tokens for each sense to their own sense-centroid and the other sense-centroid. The former is lower than the latter for both senses. However, Sense 1 exhibited a higher KDE overlap (0.445) than Sense 2 (0.341), indicating that tokens of Sense 1 are somewhat less clearly separated from other senses in centroid space than tokens of Sense 2.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.5\linewidth]{../../output/plots/overlap_density.png}
-    \caption{Caption}
-    \label{fig:placeholder}
+    \caption{Centroid-based overlap.}
+    \label{fig:KDEdistanceCentroid_ownVSother}
 \end{figure}
+
+## Geometric overlap
+
+To complement the centroid-based distances, we also computed overlap directly on the embedding distributions for each sense. For this, we estimated KDE functions over the embeddings themselves (after 1D and 2D PCA reduction). This yields how much of the geometric ``surface'' of one cluster is occupied by the other. Unlike the centroid-based overlap, which measures discriminability relative to cluster centers, this method captures actual geometric overlap in embedding space. High overlap here indicates that embeddings of the two senses physically occupy the same regions, reflecting semantic entanglement or ambiguity. Low overlap indicates that the clusters are well-separated in latent space, regardless of centroid proximity. Thus, this analysis provides a more direct estimate of semantic distinctiveness at the token level, whereas centroid distances summarize separability from the average cluster location. The overlap in 1D and 2D space is shown in Figure \ref{fig:KDEsurface}. In either space, overlap fraction was roughly symmetric for both senses (1D: 0.296 [sense 1], 0.290 [sense 2]; 2D: 0.233 [sense 1], 0.231 [sense 2]), in contrast to the centroid-based estimation.
 
 \begin{figure}
 \centering
+    \caption{Geometric overlap in embedding space. The grey areas mark the overlaps.}
+    \label{fig:KDEsurface}
     \begin{subfigure}[b]{0.6\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{../../output/plots/kde1D_embeddings.png}
-    \caption{\label{fig:image1}}
+    \includegraphics[width=\textwidth]{../../output/plots/kde1D_embeddings_overlap.png}
+    \caption{\label{fig:KDEsurface1D}}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.38\textwidth}
     \centering
-    \includegraphics[width=0.9\textwidth]{../../output/plots/kde2D_embeddings.png}
-    \caption{\label{fig:image2}}
+    \includegraphics[width=0.9\textwidth]{../../output/plots/kde2D_embeddings_overlap.png}
+    \caption{\label{fig:KDEsurface1D}}
     \end{subfigure}
 \end{figure}
 
 ## Embedding similarity vs sense similarity
 
+To examine whether sentence embeddings capture sense membership, we computed pairwise cosine similarities between all sentence embeddings. For comparison, a binary matrix indicated whether each sentence pair belonged to the same annotated sense (1) or different senses (0). We then correlated the upper-triangle values of the embedding similarity matrix with the corresponding sense similarity values using Spearman’s rank correlation. Visualization of the results was achieved by plotting KDE of embedding similarities for sentence pairs with the same sense versus different senses. Higher cosine similarity for same-sense pairs relative to different-sense pairs indicates that embeddings encode semantic sense information. The Spearman correlation quantifies the degree to which semantic closeness in embedding space aligns with sense membership, providing a global measure of clustering in the latent space. Unlike centroid-based or geometric overlap, this is a global, distribution-agnostic summary statistic: it does not explicitly consider clusters or shapes, only relative similarity between pairs of sentences.
+
+Figure \ref{fig:matrixComparison} shows the distribution of pairwise cosine similarities between sentence embeddings, separated by whether the sentences share the same sense (red) or have different senses (blue). Embeddings of sentences with the same sense tend to be more similar, as evidenced by the right-shifted red distribution relative to the blue distribution. This pattern is quantified by a Spearman correlation of $\rho = 0.427$ ($p < 0.001$), indicating a moderate positive association between embedding similarity and sense membership.
+
 \begin{figure}
     \centering
     \includegraphics[width=0.5\linewidth]{../../output/plots/embedding_vs_sense_similarity.png}
-    \caption{Caption}
-    \label{fig:placeholder}
+    \caption{Cosine similarity between same-sense and other-sense tokens of \textit{imagine}.}
+    \label{fig:matrixComparison}
 \end{figure}
 
 ## Senses under embedding projection
@@ -345,7 +410,7 @@ Figure \ref{fig:3Dprojection} shows 3D projection of sentence embeddings onto th
 \begin{figure}
     \centering
     \includegraphics[width=0.5\linewidth]{../../output/plots/embedding_projection_3D.png}
-    \caption{3D embedding projections. Dimensions have been rescaled to $z$-scores.}
+    \caption{3D embedding projections.}
     \label{fig:3Dprojection}
 \end{figure}
 
@@ -353,7 +418,7 @@ Figure \ref{fig:2Dprojection} depicts 2-dimensional for all combinations of dime
 
 \begin{figure}
 \centering
-    \caption{2D embedding projections. Dimensions have been rescaled to $z$-scores.}
+    \caption{2D embedding projections.}
     \label{fig:2Dprojection}
     \begin{subfigure}[b]{0.30\textwidth}
     \centering
