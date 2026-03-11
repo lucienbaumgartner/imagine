@@ -65,7 +65,7 @@
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\setcounter{secnumdepth}{5}
 \usepackage{booktabs}
 \usepackage{threeparttable}
 \usepackage[utf8]{inputenc}
@@ -154,14 +154,16 @@ Membership}\label{predictive-modeling-of-sense-membership}
 
 To characterize how annotation dimensions jointly predict latent sense
 membership, we fit a multinomial generalized linear model with ridge
-(L2) regularization. Cluster assignment from the GMM served as the
-dependent variable. Predictors included all three annotation dimensions
-and their pairwise interactions. Regularization strength was selected
-via cross-validation to promote coefficient stability. Because latent
-sense labels were constructed via clustering in the same annotation
-space used as predictors, the observed predictive performance does not
-provide independent evidence about the determinants of sense membership.
-Rather, the multinomial model serves a descriptive role, summarizing how
+(L2)
+regularization.\footnote{Note that the multinomial model (instead of a binomial one) was used mainly because it allows for modeling $>2$ senses, if we need that at a later stage.}
+Cluster assignment from the GMM served as the dependent variable.
+Predictors included all three annotation dimensions and their pairwise
+interactions. Regularization strength was selected via cross-validation
+to promote coefficient stability. Because latent sense labels were
+constructed via clustering in the same annotation space used as
+predictors, the observed predictive performance does not provide
+independent evidence about the determinants of sense membership. Rather,
+the multinomial model serves a descriptive role, summarizing how
 hypothesized senses of \emph{imagine} are distributed across the joint
 space defined by intentionality, factivity, and pictoriality.
 Accordingly, coefficient estimates and performance metrics are
@@ -222,6 +224,16 @@ The sense annotation based on the GMM were written out to the corpus and
 subsequently used for a mock-up of the embedding-based analysis.
 
 \section{Embedding analysis}\label{embedding-analysis}
+
+We analyzed contextual embeddings of sentences containing the word
+imagine to investigate how different senses of the word are represented
+in latent space. This embedding analysis explores the geometric
+structure of the representations, the relationship between semantic
+similarity and sense membership, and the alignment of embeddings with
+annotated semantic dimensions. The approach provides a comprehensive
+view of how contextual usage patterns are captured by the language model
+(BERT) and how they relate to theoretical distinctions between senses
+(note that at the moment we use inductive sense distinctions still).
 
 \subsection{Sense overlap based on centroid
 distance}\label{sense-overlap-based-on-centroid-distance}

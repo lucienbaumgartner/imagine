@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.10)  11 MAR 2026 10:35
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.10)  11 MAR 2026 10:59
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -615,78 +615,78 @@ Package pdftex.def Info: imagine_report_files/figure-latex/unnamed-chunk-5-1.pdf
 
 {/Users/lb/Library/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc} <./imagine_report_files/figure-latex/unnamed-chunk-4-1.pdf>]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 173.
+(Font)              <10> on input line 158.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 173.
+(Font)              <7> on input line 158.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 173.
-<imagine_report_files/figure-latex/unnamed-chunk-7-1.pdf, id=27, 361.35pt x 144.54pt>
+(Font)              <5> on input line 158.
+<imagine_report_files/figure-latex/unnamed-chunk-7-1.pdf, id=28, 361.35pt x 144.54pt>
 File: imagine_report_files/figure-latex/unnamed-chunk-7-1.pdf Graphic file (type pdf)
 <use imagine_report_files/figure-latex/unnamed-chunk-7-1.pdf>
-Package pdftex.def Info: imagine_report_files/figure-latex/unnamed-chunk-7-1.pdf  used on input line 189.
+Package pdftex.def Info: imagine_report_files/figure-latex/unnamed-chunk-7-1.pdf  used on input line 191.
 (pdftex.def)             Requested size: 361.34912pt x 144.53963pt.
-[2{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc} <./imagine_report_files/figure-latex/unnamed-chunk-5-1.pdf>]
-<imagine_report_files/figure-latex/unnamed-chunk-8-1.pdf, id=46, 216.81pt x 216.81pt>
+[2{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc} <./imagine_report_files/figure-latex/unnamed-chunk-5-1.pdf>]
+<imagine_report_files/figure-latex/unnamed-chunk-8-1.pdf, id=53, 216.81pt x 216.81pt>
 File: imagine_report_files/figure-latex/unnamed-chunk-8-1.pdf Graphic file (type pdf)
 <use imagine_report_files/figure-latex/unnamed-chunk-8-1.pdf>
-Package pdftex.def Info: imagine_report_files/figure-latex/unnamed-chunk-8-1.pdf  used on input line 202.
+Package pdftex.def Info: imagine_report_files/figure-latex/unnamed-chunk-8-1.pdf  used on input line 204.
 (pdftex.def)             Requested size: 115.63464pt x 115.63655pt.
-<imagine_report_files/figure-latex/unnamed-chunk-8-2.pdf, id=47, 216.81pt x 216.81pt>
+<imagine_report_files/figure-latex/unnamed-chunk-8-2.pdf, id=54, 216.81pt x 216.81pt>
 File: imagine_report_files/figure-latex/unnamed-chunk-8-2.pdf Graphic file (type pdf)
 <use imagine_report_files/figure-latex/unnamed-chunk-8-2.pdf>
-Package pdftex.def Info: imagine_report_files/figure-latex/unnamed-chunk-8-2.pdf  used on input line 202.
+Package pdftex.def Info: imagine_report_files/figure-latex/unnamed-chunk-8-2.pdf  used on input line 204.
 (pdftex.def)             Requested size: 115.63464pt x 115.63655pt.
-<imagine_report_files/figure-latex/unnamed-chunk-8-3.pdf, id=48, 216.81pt x 216.81pt>
+<imagine_report_files/figure-latex/unnamed-chunk-8-3.pdf, id=55, 216.81pt x 216.81pt>
 File: imagine_report_files/figure-latex/unnamed-chunk-8-3.pdf Graphic file (type pdf)
 <use imagine_report_files/figure-latex/unnamed-chunk-8-3.pdf>
-Package pdftex.def Info: imagine_report_files/figure-latex/unnamed-chunk-8-3.pdf  used on input line 202.
+Package pdftex.def Info: imagine_report_files/figure-latex/unnamed-chunk-8-3.pdf  used on input line 204.
 (pdftex.def)             Requested size: 115.63464pt x 115.63655pt.
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 214.
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 216.
 (/Users/lb/Library/TinyTeX/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [3{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc} <./imagine_report_files/figure-latex/unnamed-chunk-7-1.pdf> <./imagine_report_files/figure-latex/unnamed-chunk-8-1.pdf> <./imagine_report_files/figure-latex/unnamed-chunk-8-2.pdf> <./imagine_report_files/figure-latex/unnamed-chunk-8-3.pdf>]
-<../../output/plots/overlap_density.png, id=85, 578.16pt x 433.62pt>
+<../../output/plots/overlap_density.png, id=92, 578.16pt x 433.62pt>
 File: ../../output/plots/overlap_density.png Graphic file (type png)
 <use ../../output/plots/overlap_density.png>
-Package pdftex.def Info: ../../output/plots/overlap_density.png  used on input line 259.
+Package pdftex.def Info: ../../output/plots/overlap_density.png  used on input line 271.
 (pdftex.def)             Requested size: 180.675pt x 135.5059pt.
 [4 <../../output/plots/overlap_density.png>]
-<../../output/plots/kde1D_embeddings_overlap.png, id=97, 578.16pt x 289.08pt>
+<../../output/plots/kde1D_embeddings_overlap.png, id=103, 578.16pt x 289.08pt>
 File: ../../output/plots/kde1D_embeddings_overlap.png Graphic file (type png)
 <use ../../output/plots/kde1D_embeddings_overlap.png>
-Package pdftex.def Info: ../../output/plots/kde1D_embeddings_overlap.png  used on input line 291.
+Package pdftex.def Info: ../../output/plots/kde1D_embeddings_overlap.png  used on input line 303.
 (pdftex.def)             Requested size: 216.81221pt x 108.40472pt.
-<../../output/plots/kde2D_embeddings_overlap.png, id=98, 433.62pt x 433.62pt>
+<../../output/plots/kde2D_embeddings_overlap.png, id=104, 433.62pt x 433.62pt>
 File: ../../output/plots/kde2D_embeddings_overlap.png Graphic file (type png)
 <use ../../output/plots/kde2D_embeddings_overlap.png>
-Package pdftex.def Info: ../../output/plots/kde2D_embeddings_overlap.png  used on input line 297.
+Package pdftex.def Info: ../../output/plots/kde2D_embeddings_overlap.png  used on input line 309.
 (pdftex.def)             Requested size: 123.58244pt x 123.57635pt.
-<../../output/plots/embedding_vs_sense_similarity.png, id=100, 433.62pt x 289.08pt>
+[5 <../../output/plots/kde1D_embeddings_overlap.png> <../../output/plots/kde2D_embeddings_overlap.png>]
+<../../output/plots/embedding_vs_sense_similarity.png, id=117, 433.62pt x 289.08pt>
 File: ../../output/plots/embedding_vs_sense_similarity.png Graphic file (type png)
 <use ../../output/plots/embedding_vs_sense_similarity.png>
-Package pdftex.def Info: ../../output/plots/embedding_vs_sense_similarity.png  used on input line 333.
+Package pdftex.def Info: ../../output/plots/embedding_vs_sense_similarity.png  used on input line 345.
 (pdftex.def)             Requested size: 180.675pt x 120.45117pt.
-[5{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc} <../../output/plots/kde1D_embeddings_overlap.png> <../../output/plots/kde2D_embeddings_overlap.png>]
-<../../output/plots/embedding_projection_3D.png, id=113, 578.16pt x 433.62pt>
+[6{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc} <../../output/plots/embedding_vs_sense_similarity.png>]
+<../../output/plots/embedding_projection_3D.png, id=134, 578.16pt x 433.62pt>
 File: ../../output/plots/embedding_projection_3D.png Graphic file (type png)
 <use ../../output/plots/embedding_projection_3D.png>
-Package pdftex.def Info: ../../output/plots/embedding_projection_3D.png  used on input line 398.
+Package pdftex.def Info: ../../output/plots/embedding_projection_3D.png  used on input line 410.
 (pdftex.def)             Requested size: 180.675pt x 135.5059pt.
-[6{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc} <../../output/plots/embedding_vs_sense_similarity.png>]
-<../../output/plots/embedding_projection_intentionality_z_factivity_z_2D_core.png, id=132, 433.62pt x 433.62pt>
+<../../output/plots/embedding_projection_intentionality_z_factivity_z_2D_core.png, id=139, 433.62pt x 433.62pt>
 File: ../../output/plots/embedding_projection_intentionality_z_factivity_z_2D_core.png Graphic file (type png)
 <use ../../output/plots/embedding_projection_intentionality_z_factivity_z_2D_core.png>
-Package pdftex.def Info: ../../output/plots/embedding_projection_intentionality_z_factivity_z_2D_core.png  used on input line 424.
+Package pdftex.def Info: ../../output/plots/embedding_projection_intentionality_z_factivity_z_2D_core.png  used on input line 436.
 (pdftex.def)             Requested size: 108.4061pt x 108.40472pt.
-<../../output/plots/embedding_projection_intentionality_z_pictoriality_z_2D_core.png, id=133, 433.62pt x 433.62pt>
+<../../output/plots/embedding_projection_intentionality_z_pictoriality_z_2D_core.png, id=140, 433.62pt x 433.62pt>
 File: ../../output/plots/embedding_projection_intentionality_z_pictoriality_z_2D_core.png Graphic file (type png)
 <use ../../output/plots/embedding_projection_intentionality_z_pictoriality_z_2D_core.png>
-Package pdftex.def Info: ../../output/plots/embedding_projection_intentionality_z_pictoriality_z_2D_core.png  used on input line 430.
+Package pdftex.def Info: ../../output/plots/embedding_projection_intentionality_z_pictoriality_z_2D_core.png  used on input line 442.
 (pdftex.def)             Requested size: 108.4061pt x 108.40472pt.
-<../../output/plots/embedding_projection_factivity_z_pictoriality_z_2D_core.png, id=134, 433.62pt x 433.62pt>
+<../../output/plots/embedding_projection_factivity_z_pictoriality_z_2D_core.png, id=141, 433.62pt x 433.62pt>
 File: ../../output/plots/embedding_projection_factivity_z_pictoriality_z_2D_core.png Graphic file (type png)
 <use ../../output/plots/embedding_projection_factivity_z_pictoriality_z_2D_core.png>
-Package pdftex.def Info: ../../output/plots/embedding_projection_factivity_z_pictoriality_z_2D_core.png  used on input line 436.
+Package pdftex.def Info: ../../output/plots/embedding_projection_factivity_z_pictoriality_z_2D_core.png  used on input line 448.
 (pdftex.def)             Requested size: 108.4061pt x 108.40472pt.
 No file imagine_report.bbl.
 [7 <../../output/plots/embedding_projection_3D.png> <../../output/plots/embedding_projection_intentionality_z_factivity_z_2D_core.png> <../../output/plots/embedding_projection_intentionality_z_pictoriality_z_2D_core.png> <../../output/plots/embedding_projection_factivity_z_pictoriality_z_2D_core.png>] (./imagine_report.aux)
@@ -699,18 +699,18 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 14902 strings out of 469515
- 239270 string characters out of 5469405
- 651125 words of memory out of 5000000
- 43261 multiletter control sequences out of 15000+600000
- 695267 words of font info for 93 fonts, out of 8000000 for 9000
+ 14908 strings out of 469515
+ 239351 string characters out of 5469405
+ 652155 words of memory out of 5000000
+ 43264 multiletter control sequences out of 15000+600000
+ 701247 words of font info for 95 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 89i,8n,93p,560b,625s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmib10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on imagine_report.pdf (7 pages, 2130260 bytes).
+ 89i,8n,93p,568b,625s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmib10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on imagine_report.pdf (7 pages, 2195965 bytes).
 PDF statistics:
- 246 PDF objects out of 1000 (max. 8388607)
- 171 compressed objects within 2 object streams
- 28 named destinations out of 1000 (max. 500000)
+ 269 PDF objects out of 1000 (max. 8388607)
+ 186 compressed objects within 2 object streams
+ 29 named destinations out of 1000 (max. 500000)
  135 words of extra memory for PDF output out of 10000 (max. 10000000)
 

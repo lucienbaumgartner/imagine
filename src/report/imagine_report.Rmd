@@ -4,6 +4,7 @@ output:
   pdf_document:
     keep_tex: true
     citation_package: natbib
+    number_sections: true
 geometry: left=1.75in, right=1.75in, top=1in, bottom=1in
 biblio-style: apalike
 tables: true
@@ -120,7 +121,7 @@ ggplot(pca_res, aes(PC1, PC2, color = as.factor(paste0("sense ", sense)))) +
 
 ## Predictive Modeling of Sense Membership
 
-To characterize how annotation dimensions jointly predict latent sense membership, we fit a multinomial generalized linear model with ridge (L2) regularization. Cluster assignment from the GMM served as the dependent variable. Predictors included all three annotation dimensions and their pairwise interactions. Regularization strength was selected via cross-validation to promote coefficient stability. Because latent sense labels were constructed via clustering in the same annotation space used as predictors, the observed predictive performance does not provide independent evidence about the determinants of sense membership. Rather, the multinomial model serves a descriptive role, summarizing how hypothesized senses of *imagine* are distributed across the joint space defined by intentionality, factivity, and pictoriality. Accordingly, coefficient estimates and performance metrics are interpreted as characterizations of the induced partition rather than as inferential tests.
+To characterize how annotation dimensions jointly predict latent sense membership, we fit a multinomial generalized linear model with ridge (L2) regularization.\footnote{Note that the multinomial model (instead of a binomial one) was used mainly because it allows for modeling $>2$ senses, if we need that at a later stage.} Cluster assignment from the GMM served as the dependent variable. Predictors included all three annotation dimensions and their pairwise interactions. Regularization strength was selected via cross-validation to promote coefficient stability. Because latent sense labels were constructed via clustering in the same annotation space used as predictors, the observed predictive performance does not provide independent evidence about the determinants of sense membership. Rather, the multinomial model serves a descriptive role, summarizing how hypothesized senses of *imagine* are distributed across the joint space defined by intentionality, factivity, and pictoriality. Accordingly, coefficient estimates and performance metrics are interpreted as characterizations of the induced partition rather than as inferential tests.
 
 ```{r}
 ### GLM with ridge regularization
@@ -334,6 +335,8 @@ The multinomial model yielded smooth and highly structured probability surfaces 
 The sense annotation based on the GMM were written out to the corpus and subsequently used for a mock-up of the embedding-based analysis.
 
 # Embedding analysis
+
+We analyzed contextual embeddings of sentences containing the word imagine to investigate how different senses of the word are represented in latent space. This embedding analysis explores the geometric structure of the representations, the relationship between semantic similarity and sense membership, and the alignment of embeddings with annotated semantic dimensions. The approach provides a comprehensive view of how contextual usage patterns are captured by the language model (BERT) and how they relate to theoretical distinctions between senses (note that at the moment we use inductive sense distinctions still).
 
 ## Sense overlap based on centroid distance
 

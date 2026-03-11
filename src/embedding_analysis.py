@@ -11,18 +11,21 @@ import seaborn as sns
 import os
 from sklearn.decomposition import PCA
 from itertools import combinations
-
+from sklearn.linear_model import LinearRegression
+from mpl_toolkits.mplot3d import Axes3D
+from scipy.stats import spearmanr
+import matplotlib.patches as mpatches
 
 # Ensure output directories exist
 os.makedirs("../output/plots", exist_ok=True)
 os.makedirs("../output/stats", exist_ok=True)
 
-# --- 1. Load the CSV ---
+# Load the CSV
 file_path = "../output/data/corpus.csv"
 df = pd.read_csv(file_path)
 
 
-# --- 2. Define cleaning function ---
+# Define cleaning function
 def clean_sentence(text):
     if pd.isna(text):
         return ""
@@ -39,22 +42,25 @@ def clean_sentence(text):
     return text
 
 
-# --- 3. Apply cleaning ---
+# Apply cleaning
 df['sentence_clean'] = df['sentence'].apply(clean_sentence)
 
-# --- 4. Inspect results ---
+# Inspect results
 print(df[['sentence', 'sentence_clean']].head(10))
 
-# embeddings_analysis
+##############################################################
+########## Sense overlap based on centroid distance ##########
+##############################################################
 
-# --- 2. Choose model ---
+# Choose model
 MODEL_NAME = "bert-base-uncased"  # can swap to other models later
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModel.from_pretrained(MODEL_NAME)
 model.eval()
 
 
-# --- 3. Helper function to get token embeddings ---
+# Helper function to get token embeddings
+# NINA, PLEASE ADAPT THIS WITH YOUR FUNCTION
 def get_token_embeddings(text):
     """
     Returns token embeddings and token positions.
@@ -68,7 +74,7 @@ def get_token_embeddings(text):
     return tokens, token_embeds
 
 
-# --- 4. Extract "imagine" token embeddings ---
+# Extract token embeddings
 records = []
 for idx, row in df.iterrows():
     sentence = row['sentence_clean']
@@ -109,14 +115,14 @@ for idx, row in df.iterrows():
 
 imagine_df = pd.DataFrame(records)
 
-# --- 5. Compute centroids for each sense ---
+# Compute centroids for each sense
 sense_groups = imagine_df.groupby('sense')
 centroids = {}
 for sense, group in sense_groups:
     embeddings = np.stack(group['embedding'].values)
     centroids[sense] = embeddings.mean(axis=0)
 
-# --- 6. Measure distances between centroids ---
+# Measure distances between centroids
 senses = list(centroids.keys())
 dist_matrix = np.zeros((len(senses), len(senses)))
 for i, s1 in enumerate(senses):
@@ -129,10 +135,10 @@ for i, s1 in enumerate(senses):
 dist_df = pd.DataFrame(dist_matrix, index=senses, columns=senses)
 print("Cosine distance between centroids:\n", dist_df)
 
-# --- 7. Save embeddings for downstream visualization / clustering ---
+# Save embeddings for downstream visualization / clustering
 imagine_df.to_pickle("../output/data/imagine_token_embeddings.pkl")
 
-# --- 8. Compute distance distributions ---
+# Compute distance distributions
 distance_records = []
 
 for idx, row in imagine_df.iterrows():
@@ -166,15 +172,14 @@ for idx, row in imagine_df.iterrows():
 
 distance_df = pd.DataFrame(distance_records)
 
-# --- 9. Optional: summarize distributions ---
+# Summarize distributions
 summary_df = distance_df.groupby(['type', 'sense', 'distance_to'])['cosine_distance'].describe()
 print(summary_df)
 
-# --- 10. Save for plotting ---
+# Save for plotting at later stage if necessary
 distance_df.to_pickle("../output/data/imagine_token_distance_distributions.pkl")
 
-
-# Overlap scores
+# Plot overlap
 overlap_scores = {}
 
 plt.figure(figsize=(8, 6))
@@ -221,14 +226,16 @@ print("Overlap scores:", overlap_scores)
 print("Plot saved to ../output/plots/overlap_density.png")
 print("Overlap estimates saved to ../output/stats/overlap_density_estimates.txt")
 
-# embeddings: your dataframe with columns ['sentence_idx', 'token_idx', 'sense', 'embedding']
 
+#######################################
+########## Geometric overlap ##########
+#######################################
 senses = imagine_df['sense'].unique()
 dims_to_run = [1, 2]  # 1D and 2D KDEs
 colors = ["#F8766D", "#00BFC4"]  # Distinct colors for each sense
 
 for n_dim in dims_to_run:
-    # --- PCA reduction if needed ---
+    # PCA reduction
     emb_matrix = np.stack(imagine_df['embedding'].values)
     if n_dim < emb_matrix.shape[1]:
         pca = PCA(n_components=n_dim)
@@ -236,13 +243,13 @@ for n_dim in dims_to_run:
     else:
         emb_reduced = emb_matrix
 
-    # --- Add reduced dimensions to dataframe ---
+    # Add reduced dimensions to dataframe
     dim_cols = [f"dim{i+1}" for i in range(n_dim)]
     emb_df = imagine_df.copy()
     for i, col in enumerate(dim_cols):
         emb_df[col] = emb_reduced[:, i]
 
-    # --- Prepare grid for KDE evaluation ---
+    # Prepare grid for KDE evaluation
     if n_dim == 1:
         xs = np.linspace(emb_df['dim1'].min(), emb_df['dim1'].max(), 200)
     elif n_dim == 2:
@@ -252,7 +259,7 @@ for n_dim in dims_to_run:
                              np.linspace(y_min, y_max, 100))
         grid_points = np.vstack([xx.ravel(), yy.ravel()])
 
-    # --- Compute sense-specific overlap fractions ---
+    # Compute sense-specific overlap fractions
     overlap_scores = {}
     for sense1, sense2 in combinations(senses, 2):
         data1 = emb_df[emb_df['sense'] == sense1][dim_cols].values.T
@@ -284,7 +291,7 @@ for n_dim in dims_to_run:
         overlap_scores[f"{sense1} over {sense2}"] = overlap_1
         overlap_scores[f"{sense2} over {sense1}"] = overlap_2
 
-    # --- Plot all senses with shaded overlap ---
+    # Plot all senses with shaded overlap
     plt.figure(figsize=(8, 4) if n_dim == 1 else (6, 6))
 
     if n_dim == 1:
@@ -314,14 +321,16 @@ for n_dim in dims_to_run:
     plt.savefig(f"../output/plots/kde{n_dim}D_embeddings_overlap.png", dpi=300)
     plt.close()
 
-    # --- Save overlap scores ---
+    # Save overlap scores
     with open(f"../output/stats/kde{n_dim}D_sense_specific_overlap_embeddings.txt", "w") as f:
         for pair, score in overlap_scores.items():
             f.write(f"{pair}\t{score:.4f}\n")
 
     print(f"{n_dim}D sense-specific KDE overlaps:", overlap_scores)
 
-#### Experiment 2
+##############################################################
+########## Embedding similarity vs sense similarity ##########
+##############################################################
 # Stack embeddings into a matrix
 emb_matrix = np.stack(imagine_df['embedding'].values)  # shape: (n_samples, emb_dim)
 
@@ -330,8 +339,6 @@ emb_similarity = cosine_similarity(emb_matrix)  # shape: (n_samples, n_samples)
 
 labels = imagine_df['sense'].values
 sense_similarity = (labels[:, None] == labels[None, :]).astype(int)
-
-from scipy.stats import spearmanr
 
 # Extract upper triangle indices
 triu_idx = np.triu_indices_from(emb_similarity, k=1)
@@ -366,15 +373,9 @@ plt.savefig("../output/plots/embedding_vs_sense_similarity.png", dpi=300)
 plt.close()
 
 
-####### Experiment 3
-from sklearn.linear_model import LinearRegression
-
-
-# assume imagine_df is already loaded and contains:
-# - "embedding" column (list/array per row)
-# - z-scored dimensions: "intentionality_z", "factivity_z", "pictoriality_z"
-# - "sense" column (categorical labels)
-
+#######################################################
+########## Senses under embedding projection ##########
+#######################################################
 # Stack embeddings into matrix
 emb_matrix = np.stack(imagine_df['embedding'].values)
 
@@ -406,8 +407,6 @@ proj_df = pd.DataFrame(proj_dict)
 proj_df['sense'] = imagine_df['sense'].values
 
 # Plot 3D scatter colored by sense
-from mpl_toolkits.mplot3d import Axes3D
-
 fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(111, projection='3d')
 
@@ -435,9 +434,7 @@ plt.tight_layout()
 plt.savefig("../output/plots/embedding_projection_3D.png", dpi=300)
 plt.close()
 
-
-import matplotlib.patches as mpatches
-
+# 2D Plots
 dim_pairs = list(combinations(['intentionality_z', 'factivity_z', 'pictoriality_z'], 2))
 senses = proj_df['sense'].unique()
 colors = ["#F8766D", "#00BFC4"]  # Distinct colors for each sense
