@@ -9,99 +9,102 @@ library(glmnet)
 library(nnet)
 library(purrr)
 library(scales)
+library(caret)
 
 rm(list = ls())
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-# Load data
-df <- read_xlsx("../input/corpus_features.xlsx", sheet = 1)
-names(df) <- gsub("\\smeans", "", tolower(names(df)))
+# Load feature annotation
+df_features <- read_xlsx("../input/corpus_features.xlsx", sheet = 1)
+names(df_features) <- gsub("\\smeans", "", tolower(names(df_features)))
+df_features <- df_features %>% select(-number)
 
-# Drop excluded snippets and those with too little information
+# Load sense annotation
+df_senses <- read_xlsx("../input/corpus_senses.xlsx", sheet = 1)
+names(df_senses) <- tolower(names(df_senses))
+df_senses <- df_senses %>% select(-sense_arb)
+str(df_senses)
+
+# Select variables
+df_senses <- df_senses %>% select(id, no, exclusions, starts_with("sense"))
+
+# Merge datasets
+df <- left_join(df_features, df_senses, by = c("id", "no"))
+
+# Drop excluded snippets and those with sense disagreements
 df <- df %>% mutate(across(ends_with("ity"), ~ as.numeric(.))) # will introduce NAs for X and E
-df <- na.omit(df)
+table((is.na(df$factivity) | is.na(df$intentionality) | is.na(df$pictoriality)) == !is.na(df$exclusions)) # 56 exclusion discrepancies between data sets
+df <- df %>% filter(is.na(exclusions)) %>% select(-exclusions) # drop sense annotation exclusions
+df <- na.omit(df) # drop feature annotation exclusions
+df <- df %>% filter(sense_nch == sense_ah) # drop sense disagreements
 
-# Select only the annotation dimensions
-annot <- df %>%
-  select(intentionality, factivity, pictoriality)
+# Factor for sense
+df <- df %>% 
+  rename(sense = sense_nch) %>% 
+  select(-sense_ah) %>% 
+  mutate(
+    sense = factor(case_when(
+      sense == "1" ~ "1-VIZUALIZE/PICTURE",
+      sense == "2" ~ "2-THINK/BELIVE",
+      sense == "3" ~ "3-SUPPOSE/ASSUME",
+      sense == "4" ~ "4-FALSE_PERCEPTION",
+      sense == "5" ~ "5-EXCLAMATIVE",
+      sense == "O" ~ "O-OTHER",
+      sense == "?" ~ "?-UNCLASSIFIABLE"
+  )))
 
-# Check ranges (should be within 1–7 or slightly outside if averaged)
-apply(annot, 2, range)
+table(df$sense)
 
-# Pairwise correlations
-cor(annot, use = "pairwise.complete.obs")
+# Drop edge cases
+df <- df %>% 
+  filter(!sense %in% c("O-OTHER", "?-UNCLASSIFIABLE", "5-EXCLAMATIVE")) %>% 
+  mutate(sense = factor(sense))
+levels(df$sense)
 
-# Distributions
-annot_long <- melt(annot) # Long form
-ggplot(annot_long, aes(x = value, fill = variable)) + 
-  geom_histogram(binwidth=0.5) + 
-  facet_wrap(~ variable) +
-  theme_light()
+# Scale features
+df <- df %>% mutate(across(ends_with("ity"), ~ scale(.)))
 
-# Standardize annotation space
-annot_z <- as.data.frame(scale(annot))
-
-scatterplot3d(annot_z$intentionality, 
-              annot_z$factivity,
-              annot_z$pictoriality, 
-              pch=19, color="blue")
-
-# Distributions scaled
-annot_z_long <- melt(annot_z) # Long form
-ggplot(annot_z_long, aes(x = value, fill = variable)) + 
-  geom_histogram(binwidth=0.5) + 
-  facet_wrap(~ variable) +
-  theme_light()
-
-## Clustering
-# 1- vs 2- vs 3-component solution
-gmm_res <- Mclust(annot_z, G = 1:3)
-summary(gmm_res) 
-# BIC values
-plot(gmm_res, what = "BIC",
-     main = "BIC for Gaussian mixture models")
-
-# option with three clusters is preferred, but we use a two-cluster solution for the mock up
-
-# 2-component solution
-gmm_res <- Mclust(annot_z, G = 2)
-
-# Cluster assignments
-annot_z$sense <- gmm_res$classification
-
-# Posterior probabilities (membership confidence)
-annot_z$posterior_max <- apply(gmm_res$z, 1, max)
-
-# Check cluster means
-aggregate(cbind(intentionality, factivity, pictoriality) ~ sense, data = annot_z, mean)
-
-# PCA to check for 2D cluster separation
-pca_res <- prcomp(annot_z, center = FALSE, scale. = FALSE)
-
-# Variance explained
-summary(pca_res)
-
-# Combine clustering with PCA
-pca_res <- bind_cols(pca_res$x, annot_z)
-
-ggplot(pca_res, aes(PC1, PC2, color = as.factor(sense))) +
-  geom_point(alpha = 0.6) +
-  labs(title = "PCA of annotation space with latent sense clusters",
-       color = "Sense") +
-  theme_minimal()
-
-# 3D cluster separation
-scatterplot3d(annot_z$intentionality, 
-              annot_z$factivity,
-              annot_z$pictoriality, 
-              pch=19, color=annot_z$sense)
+### Observed distributional overlap
+df %>%
+  select(sense, intentionality, factivity, pictoriality) %>%
+  pivot_longer(-sense, names_to = "feature", values_to = "value") %>%
+  ggplot(aes(x = value, fill = sense, color = sense)) +
+  geom_density(alpha = 0.3, linewidth = 0.6) +
+  facet_wrap(~ feature, ncol = 1) +
+  scale_fill_brewer(palette = "Set1") +
+  scale_color_brewer(palette = "Set1") +
+  theme_minimal() +
+  labs(
+    x = "z-score",
+    y = "Density",
+    fill = "Sense",
+    color = "Sense",
+    title = "Feature distributions by sense"
+  ) +
+  theme(legend.position = "bottom")
 
 ### GLM with ridge regularization
 # Fit multinomial regression with 2-wy interactions as IV L2 (ridge) regularization for stability
-y <- as.factor(paste0("sense ", annot_z$sense))
-x_int <- model.matrix(~ (intentionality + factivity + pictoriality)^2, data = annot_z)[,-1]
+y <- df$sense
+x_int <- model.matrix(~ (intentionality + factivity + pictoriality)^2, data = df)[,-1]
 cv_fit_int <- cv.glmnet(x_int, y, family = "multinomial", alpha = 0, type.measure = "class")
 best_lambda <- cv_fit_int$lambda.min
+
+# Predicted classes on training data
+pred_class <- predict(cv_fit_int, newx = x_int, s = best_lambda, type = "class")
+pred_class <- factor(pred_class, levels = levels(y))
+
+# Confusion matrix
+conf_mat <- table(Predicted = pred_class, Actual = y)
+print(conf_mat)
+
+# Overall accuracy
+accuracy <- mean(pred_class == y)
+cat("Training accuracy:", round(accuracy, 3), "\n")
+
+# Per-class precision, recall, F1
+conf_detail <- confusionMatrix(pred_class, y)
+print(conf_detail$byClass[, c("Precision", "Recall", "F1")])
 
 coefs <- coef(cv_fit_int, s = best_lambda)
 
@@ -125,13 +128,13 @@ for (vp in pairs) {
   
   # Build grid manually
   grid <- expand.grid(
-    seq(min(annot_z[[x_var]]), max(annot_z[[x_var]]), length.out = 50),
-    seq(min(annot_z[[y_var]]), max(annot_z[[y_var]]), length.out = 50)
+    seq(min(df[[x_var]]), max(df[[x_var]]), length.out = 50),
+    seq(min(df[[y_var]]), max(df[[y_var]]), length.out = 50)
   )
   colnames(grid) <- c(x_var, y_var)
   
   # Add fixed variable at its median
-  grid[[fix_var]] <- median(annot_z[[fix_var]])
+  grid[[fix_var]] <- median(df[[fix_var]])
   
   # Model matrix
   grid_mm <- model.matrix(~ (intentionality + factivity + pictoriality)^2, data = grid)[,-1]
@@ -206,10 +209,6 @@ ci_lower <- apply(coefs_boot, c(2,3), function(x) quantile(x, 0.025, na.rm=TRUE)
 ci_upper <- apply(coefs_boot, c(2,3), function(x) quantile(x, 0.975, na.rm=TRUE))
 coef_median <- apply(coefs_boot, c(2,3), median, na.rm=TRUE)
 
-# Compute stability (selection frequency)
-stability <- apply(selected_boot, c(2,3), mean, na.rm=TRUE)
-stability # all predictors are selected in 100% of iterations
-
 # Convert to data.frame for reporting
 rename_terms <- function(terms) {
   parts <- strsplit(terms, ":", fixed = TRUE)
@@ -223,31 +222,38 @@ rename_terms <- function(terms) {
 
 coef_df <- expand.grid(
   term = rename_terms(colnames(x_int)),
-  cluster = as.factor(paste0("sense ", 1:n_clusters))
+  sense = as.factor(paste0("sense ", 1:n_clusters))
 ) %>%
   mutate(
     median = as.vector(coef_median),
     ci_lower = as.vector(ci_lower),
-    ci_upper = as.vector(ci_upper),
-    stability = as.vector(stability)
+    ci_upper = as.vector(ci_upper)
   )
 
 # Quick view
 head(coef_df)
 
-ggplot(coef_df, aes(x = term, y = median, color = cluster)) +
+coef_df <- coef_df %>% 
+  mutate(sense = case_when(
+    sense == "sense 1" ~ "1-VIZUALIZE/PICTURE",
+    sense == "sense 2" ~ "2-THINK/BELIVE",
+    sense == "sense 3" ~ "3-SUPPOSE/ASSUME",
+    sense == "sense 4" ~ "4-FALSE_PERCEPTION"
+  ))
+
+ggplot(coef_df, aes(x = term, y = median, color = term)) +
+  geom_hline(yintercept = 0) +
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), 
                 position = position_dodge(width = 0.6),
                 width = 0.2) +
   geom_point(position = position_dodge(width = 0.6), size = 1) +
+  facet_grid(~ sense) +
   labs(
-    color = "Cluster",
-    x = "Term",
+    color = "Term",
+    x = "Sense",
     y = "Median Coefficients"
   ) +
   theme_light()
 
 # Write out clustering
-annot_z <- annot_z %>% rename_with(~ paste0(.x, "_z"), .cols = 1:3)
-corpus <- bind_cols(df, annot_z)
-write.csv(corpus, file = "../output/data/corpus.csv", quote = T, row.names = F)
+write.csv(df, file = "../output/data/corpus_v2.csv", quote = T, row.names = F)
