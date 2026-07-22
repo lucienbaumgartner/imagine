@@ -1,0 +1,1252 @@
+---
+title: "Imagine -- An Exploratory Analysis v3"
+output: 
+  pdf_document:
+    keep_tex: true
+    citation_package: natbib
+    number_sections: true
+geometry: left=1.5in, right=1.5in, top=1in, bottom=1in
+biblio-style: apalike
+tables: true
+header-includes: 
+  - \usepackage{booktabs}
+  - \usepackage{threeparttable}
+  - \usepackage[utf8]{inputenc}
+  - \usepackage[T1]{fontenc}
+  - \usepackage{amsmath}
+  - \usepackage{tabularx}
+  - \usepackage{threeparttable}
+  - \usepackage{pdflscape}
+  - \usepackage{float} #use the 'float' package
+  - \floatplacement{figure}{H} #make every figure with caption = h
+  - \usepackage{subcaption}
+  - \usepackage{caption}
+  - \captionsetup[figure]{skip=0.5em}
+bibliography: hb.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+options(knitr.kable.NA = '')
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+library(mclust)
+library(ggplot2)
+library(patchwork)
+library(reshape2)
+library(scatterplot3d)
+library(tidyr)
+library(glmnet)
+library(nnet)
+library(purrr)
+library(scales)
+library(caret)
+library(kableExtra)
+library(knitr)
+library(stringr)
+library(ks)
+library(pracma)
+library(randomForest)
+
+rm(list = ls())
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+```
+
+```{r import-main-data}
+# Load feature annotation
+df_features <- read_xlsx("../../input/corpus_features.xlsx", sheet = 1)
+names(df_features) <- gsub("\\smeans", "", tolower(names(df_features)))
+df_features <- df_features %>% select(-number)
+
+# Load sense annotation
+df_senses <- read_xlsx("../../input/corpus_senses.xlsx", sheet = 1)
+names(df_senses) <- tolower(names(df_senses))
+n_arb <- length(df_senses$sense_arb[!is.na(df_senses$sense_arb)])
+df_senses <- df_senses %>% select(-sense_arb)
+# str(df_senses)
+
+# Select variables
+df_senses <- df_senses %>% select(id, no, exclusions, starts_with("sense"))
+
+# Merge datasets
+df <- left_join(df_features, df_senses, by = c("id", "no"))
+
+# Drop excluded snippets
+df <- df %>% mutate(across(ends_with("ity"), ~ as.numeric(.))) # will introduce NAs for X and E
+# table((is.na(df$factivity) | is.na(df$intentionality) | is.na(df$pictoriality)) == !is.na(df$exclusions)) # 56 exclusion discrepancies between data sets
+df <- df %>% filter(is.na(exclusions)) %>% select(-exclusions) # drop sense annotation exclusions
+df <- na.omit(df) # drop feature annotation exclusions
+```
+
+```{r resolve-sense-disagreements}
+# Settle the sense_nch vs. sense_ah disagreement cases via a third coder (referee) who
+# separately annotated exactly these cases.
+df_referee <- read_xlsx("../../input/referee_senses.xlsx", sheet = 1)
+df_referee <- df_referee %>% select(id, no, sense_ef = Sense_EF)
+
+n_disagreement <- sum(df$sense_nch != df$sense_ah)
+
+df <- df %>%
+  left_join(df_referee, by = c("id", "no")) %>%
+  # Majority vote across the three coders: where nch and ah already agree, keep that value;
+  # otherwise the referee (sense_ef) breaks the tie in favor of whichever of the two they
+  # match. If all three disagree, there is no majority -- mark the case "?" so it is dropped
+  # along with the other edge senses further below, rather than silently guessing.
+  mutate(sense = case_when(
+    sense_nch == sense_ah ~ sense_nch,
+    sense_ef == sense_nch ~ sense_nch,
+    sense_ef == sense_ah  ~ sense_ah,
+    TRUE ~ "?"
+  ))
+
+n_unresolved <- sum(df$sense_nch != df$sense_ah & df$sense == "?")
+
+df <- df %>% select(-sense_nch, -sense_ah, -sense_ef)
+
+# Factor for sense
+df1 <- df %>%
+  mutate(
+    sense = factor(case_when(
+      sense == "1" ~ "1-VIZUALIZE/PICTURE",
+      sense == "2" ~ "2-THINK/BELIVE",
+      sense == "3" ~ "3-SUPPOSE/ASSUME",
+      sense == "4" ~ "4-FALSE_PERCEPTION",
+      sense == "5" ~ "5-EXCLAMATIVE",
+      sense == "O" ~ "O-OTHER",
+      sense == "?" ~ "?-UNCLASSIFIABLE"
+  )))
+
+# Drop edge cases
+df <- df1 %>% 
+  filter(!sense %in% c("O-OTHER", "?-UNCLASSIFIABLE", "5-EXCLAMATIVE")) %>% 
+  mutate(sense = factor(sense))
+
+# Scale features
+df <- df %>% mutate(across(ends_with("ity"), ~ scale(.)))
+```
+
+
+```{r import-additional-data}
+# Load un-aggregated (per-coder) feature scores. The corpus was coded in two batches: pt1
+# covers tokens no. 1-100 and was scored by three coders (N, D, E); pt2 covers tokens
+# no. 101-1000 and was scored by two coders (D, N) plus a precomputed mean.
+df_pt1 <- read_xlsx("../../input/raw_feature_scores_pt1.xlsx", sheet = 1)
+df_pt1 <- df_pt1 %>%
+  select(id, no, `Intent N`, `Intent D`, `Intent E`,
+         `Fact N`, `Fact D`, `Fact E`,
+         `Pict N`, `Pict D`, `Pict E`) %>%
+  rename(intentionality_N = `Intent N`, intentionality_D = `Intent D`, intentionality_E = `Intent E`,
+         factivity_N = `Fact N`, factivity_D = `Fact D`, factivity_E = `Fact E`,
+         pictoriality_N = `Pict N`, pictoriality_D = `Pict D`, pictoriality_E = `Pict E`) %>%
+  # Coder cells carry non-numeric exclusion/uncertainty markers (E, ?, X, XX, ...) -- coerce
+  # to numeric so these become proper NAs instead of leaving the columns as character vectors.
+  mutate(across(-c(id, no), ~ suppressWarnings(as.numeric(.)))) %>%
+  # pt1 has no precomputed mean column. Unlike pt2, these tokens were scored by three coders
+  # (N, D, E), so the aggregate is the mean of all three (na.rm handles the rare row where one
+  # coder's cell was excluded/unparseable) -- verified to reproduce corpus_features.xlsx
+  # exactly (82/82 matches for intentionality, factivity, and pictoriality).
+  mutate(
+    intentionality_check = rowMeans(cbind(intentionality_N, intentionality_D, intentionality_E), na.rm = TRUE),
+    factivity_check = rowMeans(cbind(factivity_N, factivity_D, factivity_E), na.rm = TRUE),
+    pictoriality_check = rowMeans(cbind(pictoriality_N, pictoriality_D, pictoriality_E), na.rm = TRUE)
+  )
+
+df_pt2 <- read_xlsx("../../input/raw_feature_scores_pt2.xlsx", sheet = 1)
+df_pt2 <- df_pt2 %>%
+  select(id, no, starts_with("COR")) %>%
+  rename(intentionality_D = "CORIntent D",
+         intentionality_N = "CORIntent N",
+         intentionality_check = "CORIntent Mean",
+         factivity_D = "CORFact D",
+         factivity_N = "CORFact N",
+         factivity_check = "CORFact Mean",
+         pictoriality_D = "CORPict D",
+         pictoriality_N = "CORPict N",
+         pictoriality_check = "CORPict Mean") %>%
+  # Coder cells carry non-numeric exclusion/uncertainty markers (E, ?, X, XX, ...), exactly
+  # like the aggregated feature sheet -- coerce to numeric so these become proper NAs instead
+  # of leaving the columns as character vectors.
+  mutate(across(-c(id, no), ~ suppressWarnings(as.numeric(.))))
+
+# pt2 has no third coder, so bind_rows() fills the *_E columns with NA for those rows.
+df_features_by_coder <- bind_rows(df_pt1, df_pt2)
+
+# `id` is the source-text code and recurs across every "imagine" token drawn from the same
+# text, so it does not identify a row by itself; `no` is the corpus-wide running index of the
+# token and is unique on its own. Both spreadsheets share the same `no` numbering, so id+no is
+# a valid composite key and this join is correct.
+df_add <- left_join(df, df_features_by_coder, by = c("id", "no"))
+
+# pt1 (tokens 1-100) and pt2 (tokens 101-1000) together cover the full corpus, so this join
+# should no longer leave a large block of tokens without a per-coder record.
+n_missing_raw <- sum(is.na(df_add$intentionality_D))
+pct_missing_raw <- round(n_missing_raw / nrow(df_add) * 100, 1)
+```
+
+# Data Merging, Filtering, and Data Transformation
+
+Sense and feature annotation datasets were merged using `$id` and `$no`, as suggested by Nina. Sense annotations by ARB were ignored, since they only span `r n_arb` rows. Rows with non-numeric values in either feature variable or a non-NA value in `$Exclusions` (from the sense annotation data) were removed. Of the `r n_disagreement` remaining cases where NCH and AH's sense annotations disagreed, `r n_disagreement - n_unresolved` were settled via majority vote using a third coder (referee) who separately annotated exactly these disagreement cases; the `r n_unresolved` cases where all three coders disagreed have no majority and were marked unclassifiable. This leaves `r nrow(df1)` observations. Further, rows with sense values `"?-UNCLASSIFIABLE"`, `"5-EXCLAMATIVE"`, or `"O-Other"` (not occurring) were dropped due to low occurrence (see Table \ref{tab:senseCounts}), which makes estimation unstable. The final dataset consists of `r nrow(df)` observations. Lastly, the three feature dimensions were $z$-scaled for comparability.
+
+```{r}
+df1 %>% 
+  group_by(sense) %>% 
+  summarise(n = n()) %>% 
+  setNames(., str_to_title(names(.))) %>% 
+  kable(digits = 0, linesep = "", booktabs = TRUE, format = "latex", caption = "\\label{tab:senseCounts} Sense counts before removal of edge classes.") %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+# Descriptive Statistics
+
+Figure \ref{fig:distributions} shows considerable overlap in feature distributions across the different senses. To quantify this, we computed pairwise overlap coefficients between sense distributions for each feature using kernel density estimation (KDE), measuring both the raw shared area under the minimum of two KDE curves and its normalization by each sense's total density (see Table \ref{tab:overlap} in the Appendix). Figure \ref{fig:Xdistributions} shows a similar picture for feature interactions. In view of that, clear sense separation via feature dimensions seems unlikely. 
+
+```{r, fig.cap="Fetaure distributions for the different senses\\label{fig:distributions}", fig.align='center', out.width="1\\linewidth", fig.height=2.5, fig.pos="h"}
+### Observed distributional overlap
+df %>%
+  select(sense, intentionality, factivity, pictoriality) %>%
+  pivot_longer(-sense, names_to = "feature", values_to = "value") %>%
+  ggplot(aes(x = value, fill = sense, color = sense)) +
+  geom_density(alpha = 0.3, linewidth = 0.6) +
+  facet_grid(~ feature) +
+  scale_fill_brewer(palette = "Set1") +
+  scale_color_brewer(palette = "Set1") +
+  theme_light() +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  labs(
+    x = "z-score",
+    y = "Density",
+    fill = "Sense",
+    color = "Sense",
+  ) +
+  theme(legend.position = "top",
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 10, face = "bold"),
+        axis.title = element_text(size = 10),
+        axis.text = element_text(size = 8),
+        legend.key.size = unit(0.75,"line"),
+        panel.grid.minor = element_blank())
+```
+
+
+```{r fig.cap="Interactions of feature distributions for the different senses\\label{fig:Xdistributions}", fig.align='center', fig.pos="h", out.width="1\\linewidth", fig.height=3}
+feature_pairs <- combn(c("intentionality", "factivity", "pictoriality"), 2, simplify = FALSE)
+
+plots_2d <- list()
+
+for (pair in feature_pairs) {
+  x_var <- pair[1]
+  y_var <- pair[2]
+  
+  p <- df %>%
+    select(sense, all_of(c(x_var, y_var))) %>%
+    ggplot(aes(x = .data[[x_var]], y = .data[[y_var]], 
+               color = sense, fill = sense)) +
+    geom_density_2d(alpha = 0.8, linewidth = 0.5) +
+    geom_point(alpha = 0.15, size = 0.8) +
+    scale_color_brewer(palette = "Set1") +
+    scale_fill_brewer(palette = "Set1") +
+    theme_light() +
+    labs(
+      x = paste0(x_var, " (z-score)"),
+      y = paste0(y_var, " (z-score)"),
+      color = "Sense",
+      fill  = "Sense"
+    ) +
+    theme(
+      legend.position    = "right",
+      legend.text        = element_text(size = 8),
+      legend.title       = element_text(size = 10, face = "bold"),
+      axis.title         = element_text(size = 10),
+      axis.text          = element_text(size = 8),
+      legend.key.size    = unit(0.75, "line"),
+      panel.grid.minor   = element_blank()
+    ) + 
+    coord_fixed()
+  
+  plots_2d[[paste(x_var, y_var, sep = "_")]] <- p
+}
+
+# Extract legend from one plot
+get_legend <- function(p) {
+  gt <- ggplotGrob(p + theme(legend.position = "right"))
+  leg <- gt$grobs[[which(sapply(gt$grobs, function(x) x$name) == "guide-box")]]
+  leg
+}
+
+# Strip legend from all plots
+plots_clean <- lapply(plots_2d, function(p) p + theme(legend.position = "none"))
+
+# Combine with patchwork
+combined <- (plots_clean$intentionality_factivity | 
+             plots_clean$intentionality_pictoriality | 
+             plots_clean$factivity_pictoriality) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "top")
+
+combined
+```
+
+## Why is intentionality so narrowly peaked for `"1-VIZUALIZE/PICTURE"`?
+
+The intentionality panel of Figure \ref{fig:distributions} shows a markedly narrower peak for `"1-VIZUALIZE/PICTURE"` than for the other senses. Table \ref{tab:sdByFeature} confirms this is a localized pattern: the standard deviation of intentionality for `"1-VIZUALIZE/PICTURE"` is roughly a third to a quarter of the other senses', whereas factivity and pictoriality show no comparable narrowing for this sense.
+
+```{r}
+sd_table <- df1 %>%
+  filter(!sense %in% c("O-OTHER", "?-UNCLASSIFIABLE", "5-EXCLAMATIVE")) %>%
+  mutate(sense = factor(sense)) %>%
+  select(sense, intentionality, factivity, pictoriality) %>%
+  pivot_longer(-sense, names_to = "feature", values_to = "value") %>%
+  group_by(sense, feature) %>%
+  summarise(sd = sd(value), .groups = "drop") %>%
+  pivot_wider(names_from = feature, values_from = sd) %>%
+  mutate(sense = gsub("_", "\\\\_", sense))
+
+kable(
+  sd_table,
+  col.names = c("Sense", "Factivity", "Intentionality", "Pictoriality"),
+  digits = 2,
+  booktabs = TRUE,
+  escape = FALSE,
+  linesep = "",
+  format = "latex",
+  caption = "Standard deviation (raw 1--7 scale) of each feature by sense.\\label{tab:sdByFeature}"
+) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+To check whether this is an artifact of averaging over disagreeing coders, we used the un-aggregated per-coder scores loaded in `import-additional-data`, which combines two coding-batch files that together cover the full corpus: `raw_feature_scores_pt1.xlsx` (tokens no. 1--100, scored by three coders, N, D, and E) and `raw_feature_scores_pt2.xlsx` (tokens no. 101--1000, scored by two coders, D and N, plus a precomputed mean). Raw coder-level records were available for `r sum(!is.na(df_add$intentionality_D))` of the `r nrow(df_add)` observations (`r n_missing_raw` missing, `r pct_missing_raw`\%). Table \ref{tab:coderAgreement} compares the D and N coders, who scored every token in both batches (the third coder E, present only for tokens no. 1--100, is not included in this comparison); it shows that both coders *individually* already rate `"1-VIZUALIZE/PICTURE"` tokens with low variance on intentionality (SD $\approx$ 0.3--0.65) and close to the scale ceiling (mean $\approx$ 6 out of 7), whereas their variance for the other senses is far higher (SD $\approx$ 1.3--2.0). Mean absolute disagreement between coders is also the same size or smaller for `"1-VIZUALIZE/PICTURE"` than for the other senses. In other words, the narrow peak is not a symptom of coders disagreeing and averaging out to a bland middle value -- each coder already converges on a high intentionality score for this sense.
+
+```{r}
+df_intent_agree <- df_add %>%
+  filter(!is.na(intentionality_D)) %>%
+  group_by(sense) %>%
+  summarise(
+    n = n(),
+    mean_D = mean(intentionality_D),
+    mean_N = mean(intentionality_N),
+    sd_D = sd(intentionality_D),
+    sd_N = sd(intentionality_N),
+    mean_abs_disagreement = mean(abs(intentionality_D - intentionality_N)),
+    cor_DN = cor(intentionality_D, intentionality_N)
+  ) %>%
+  mutate(sense = gsub("_", "\\\\_", sense))
+
+kable(
+  df_intent_agree,
+  col.names = c("Sense", "$n$", "Mean D", "Mean N", "SD D", "SD N", "Mean $|D-N|$", "$r_{D,N}$"),
+  digits = 2,
+  booktabs = TRUE,
+  escape = FALSE,
+  linesep = "",
+  format = "latex",
+  caption = "Per-coder intentionality agreement by sense (raw 1--7 scale). D and N denote the two coders.\\label{tab:coderAgreement}"
+) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+The coder correlation $r_{D,N}$ is nonetheless the weakest for `"1-VIZUALIZE/PICTURE"` (`r round(df_intent_agree %>% filter(grepl("VIZUALIZE", sense)) %>% pull(cor_DN), 2)`) despite the low absolute disagreement. This is consistent with a restriction-of-range effect: once most ratings are compressed near the top of the scale, there is little residual variance left for the two coders' scores to correlate over, even though they remain close in absolute terms.
+
+Taken together, the pattern looks like a genuine ceiling effect rather than a data or annotation artifact: `"1-VIZUALIZE/PICTURE"` denotes deliberately forming a mental image, which by definition is an intentional act, so both coders independently push intentionality ratings toward the top of the scale for this sense. Factivity and pictoriality carry no such definitional constraint and show no equivalent narrowing.
+
+# Predictive Modeling of Sense Membership
+
+To characterize how annotation dimensions jointly predict latent sense membership, we fit a multinomial generalized linear model with ridge (L2) regularization. Manual sense annotations served as the dependent variable. Predictors included all three annotation dimensions and their pairwise interactions. Regularization strength was selected via cross-validation to promote coefficient stability.
+
+```{r}
+### GLM with ridge regularization
+# Fit multinomial regression with 2-wy interactions as IV L2 (ridge) regularization for stability
+y <- df$sense
+x_int <- model.matrix(~ (intentionality + factivity + pictoriality)^2, data = df)[,-1]
+cv_fit_int <- cv.glmnet(x_int, y, family = "multinomial", alpha = 0, type.measure = "class")
+best_lambda <- cv_fit_int$lambda.min
+
+# Predicted classes on training data
+pred_class <- predict(cv_fit_int, newx = x_int, s = best_lambda, type = "class")
+pred_class <- factor(pred_class, levels = levels(y))
+
+# Confusion matrix
+conf_mat <- table(Predicted = pred_class, Actual = y)
+conf_mat <- prop.table(conf_mat, margin = 2)
+
+# Overall accuracy
+accuracy <- mean(pred_class == y)
+
+# Per-class precision, recall, F1
+conf_detail <- confusionMatrix(pred_class, y)
+conf_detail <- conf_detail$byClass[, c("Precision", "Recall", "F1")]
+
+## Posterior probability concentration
+# Predicted probabilities for observed data
+pred_probs <- predict(
+  cv_fit_int,
+  newx = x_int,
+  s = best_lambda,
+  type = "response"
+)
+
+max_prob <- apply(pred_probs[,,1], 1, max)
+prob_df <- as.data.frame(pred_probs[,,1])
+colnames(prob_df) <- levels(y)
+prob_df$true_sense <- y
+prob_df$max_prob <- max_prob
+prob_df$correct <- pred_class == y
+
+# Concentration by true sense
+prob_df <- prob_df %>%
+  group_by(true_sense) %>%
+  summarise(
+    median_max_prob = median(max_prob),
+    iqr_max_prob    = IQR(max_prob),
+    accuracy        = mean(correct)
+  )
+```
+The multinomial model achieved a cross-validated accuracy of `r round(accuracy * 100, 1)`\% with optimal $\lambda$=`r round(best_lambda, 3)`. Performance was highly uneven across senses, however. Table \ref{tab:senseAccuracy} details accuracy per sense: 
+
+- `"1-VISUALIZE/PICTURE"` was recovered with high accuracy (`r round(prob_df %>% filter(true_sense == "1-VIZUALIZE/PICTURE") %>% pull(accuracy) %>% mean() * 100, 1)`\%) and high posterior concentration ($\tilde{p}_{\max}$=`r round(prob_df %>% filter(true_sense == "1-VIZUALIZE/PICTURE") %>% pull(median_max_prob), 3)`), indicating a well-defined feature region.
+- `"2-THINK/BELIEVE"` showed moderate accuracy (`r round(prob_df %>% filter(true_sense == "2-THINK/BELIVE") %>% pull(accuracy) %>% mean() * 100, 1)`\%) with correspondingly moderate confidence ($\tilde{p}_{\max}$=`r round(prob_df %>% filter(true_sense == "2-THINK/BELIVE") %>% pull(median_max_prob), 3)`).
+- `"3-SUPPOSE/ASSUME"` \& `"4-FALSE_PERCEPTION"` were not reliably recovered (accuracy=`r round(prob_df %>% filter(true_sense == "3-SUPPOSE/ASSUME") %>% pull(accuracy) %>% mean() * 100, 1)`\% and `r round(prob_df %>% filter(true_sense == "4-FALSE_PERCEPTION") %>% pull(accuracy) %>% mean() * 100, 1)`\% respectively). Both were misclassified `"1-VISUALIZE/PICTURE"` or `"2-THINK/BELIEVE"` with low to moderate confidence ($\tilde{p}_{\max}$=`r round(prob_df %>% filter(true_sense == "3-SUPPOSE/ASSUME") %>% pull(median_max_prob), 3)` and $\tilde{p}_{\max}$=`r round(prob_df %>% filter(true_sense == "4-FALSE_PERCEPTION") %>% pull(median_max_prob), 3)` respectively).
+
+```{r}
+kable(
+  prob_df %>% mutate(true_sense = gsub("_", "\\\\_", true_sense)),
+  col.names = c("True Sense", "$\\tilde{p}_{\\max}$", "$\\text{IQR}(\\hat{p}_{\\max})$", "Accuracy"),
+  digits = 3,
+  booktabs = TRUE,
+  escape = FALSE,
+  linesep = "",
+  format = "latex",
+  caption = "Posterior probability concentration and classification accuracy by sense. $\\tilde{p}_{\\max}$ denotes the median maximum predicted probability across observations; $\\text{IQR}(\\hat{p}_{\\max})$ denotes the interquartile range of maximum predicted probabilities.\\label{tab:senseAccuracy}"
+) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+Precision, recall, and F1 are reported in Table \ref{tab:cmDetail}. Note that the precision and F1 for `"3-SUPPOSE/ASSUME"` is NA because it was never correctly classified. Table \ref{tab:cm} in the Appendix details the the confusion matrix by sense. 
+
+```{r}
+kable(
+  conf_detail,
+  booktabs = TRUE,
+  format = "latex",
+  linesep = "",
+  caption = "Confusion Matrix.\\label{tab:cmDetail}"
+) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+These results indicate that the three features define a robust two-way opposition between `"1-VISUALIZE/PICTURE"` and `"2-THINK/BELIEVE"`, but are insufficient to distinguish the remaining senses.
+
+As a robustness check, we assessed coefficient stability using nonparametric bootstrapping (500 resamples). Bootstrap confidence intervals were narrow across main effects and interactions (Figure \ref{fig:bootstrapping}), indicating that the fitted probability surfaces were numerically stable under resampling. Keep in mind that estimates for `"3-SUPPOSE/ASSUME"` and `"FALSE_PERCEPTION"` should be interpreted cautiously.
+
+```{r fig.cap="Bootstrapped Coefficients (n = 500) with 95% CI.\\label{fig:bootstrapping}", fig.align='center', fig.pos="h", out.width="1\\linewidth", fig.height=3}
+
+# Robustness check via bootstrapping
+n_boot <- 500
+n_vars <- ncol(x_int)
+n_clusters <- length(levels(y))
+
+# Arrays to store results
+coefs_boot <- array(NA, dim = c(n_boot, n_vars, n_clusters))
+selected_boot <- array(0, dim = c(n_boot, n_vars, n_clusters))  # 1 if nonzero
+
+set.seed(1847)
+for(i in 1:n_boot){
+  # resample rows with replacement
+  rows <- sample(1:nrow(x_int), replace = TRUE)
+  
+  # fit multinomial glmnet
+  fit <- glmnet(x_int[rows,], y[rows], family="multinomial", alpha=0)
+  
+  # extract coefficients at best lambda
+  coefs_list <- coef(fit, s = best_lambda)
+  
+  for(k in 1:n_clusters){
+    # coefs_list[[k]] includes intercept as row 1, remove intercept if desired
+    coefs_k <- as.numeric(coefs_list[[k]][-1, ]) # drop intercept
+    coefs_boot[i, , k] <- coefs_k
+    
+    # mark which coefficients are non-zero
+    selected_boot[i, , k] <- as.numeric(coefs_k != 0)
+  }
+}
+
+# Compute bootstrap CI
+ci_lower <- apply(coefs_boot, c(2,3), function(x) quantile(x, 0.025, na.rm=TRUE))
+ci_upper <- apply(coefs_boot, c(2,3), function(x) quantile(x, 0.975, na.rm=TRUE))
+coef_median <- apply(coefs_boot, c(2,3), median, na.rm=TRUE)
+
+# Convert to data.frame for reporting
+rename_terms <- function(terms) {
+  parts <- strsplit(terms, ":", fixed = TRUE)
+  
+  renamed <- vapply(parts, function(p) {
+    paste(toupper(substr(p, 1, 1)), collapse = ":")
+  }, character(1))
+  
+  renamed
+}
+
+coef_df <- expand.grid(
+  term = rename_terms(colnames(x_int)),
+  sense = as.factor(paste0("sense ", 1:n_clusters))
+) %>%
+  mutate(
+    median = as.vector(coef_median),
+    ci_lower = as.vector(ci_lower),
+    ci_upper = as.vector(ci_upper)
+  )
+
+
+coef_df <- coef_df %>% 
+  mutate(sense = case_when(
+    sense == "sense 1" ~ "1-VIZUALIZE/PICTURE",
+    sense == "sense 2" ~ "2-THINK/BELIVE",
+    sense == "sense 3" ~ "3-SUPPOSE/ASSUME",
+    sense == "sense 4" ~ "4-FALSE_PERCEPTION"
+  ))
+
+ggplot(coef_df, aes(x = term, y = median, color = term)) +
+  geom_hline(yintercept = 0) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), 
+                position = position_dodge(width = 0.6),
+                width = 0.2) +
+  geom_point(position = position_dodge(width = 0.6), size = 1) +
+  facet_grid(~ sense) +
+  labs(
+    color = "Term",
+    x = "Sense",
+    y = "Median Coefficients"
+  ) +
+  theme_light() +
+  theme(
+    legend.title = element_text(face = "bold"),
+    legend.position = "top"
+  ) +
+  guides(colour = guide_legend(nrow = 1))
+```
+
+
+Predicted probabilities based on the optimal model were generated across the observed range of each pair of annotation dimensions while holding the third dimension constant at its median. These predictions were visualized in Figure \ref{fig:Xeffects} as two-dimensional heatmaps to facilitate interpretation of interaction patterns.
+
+```{r fig.cap="redicted sense probability based on GLM with ridge regularization for 2-way interactions. The third dimension is held constant at the median value.\\label{fig:Xeffects}", fig.align='center', fig.pos="h", out.width="1\\linewidth", fig.height=6}
+coefs <- coef(cv_fit_int, s = best_lambda)
+
+# Convert to data frame for inspection
+coefs_df <- do.call(rbind, lapply(names(coefs), function(cluster){
+  data.frame(cluster = cluster,
+             term = rownames(coefs[[cluster]]),
+             coef = as.numeric(coefs[[cluster]]))
+}))
+
+# Plot interactions
+vars <- c("intentionality", "factivity", "pictoriality")
+pairs <- combn(vars, 2, simplify = FALSE)
+
+plots <- list()
+
+for (vp in pairs) {
+  x_var <- vp[1]
+  y_var <- vp[2]
+  fix_var <- setdiff(vars, vp)
+  
+  # Build grid manually
+  grid <- expand.grid(
+    seq(min(df[[x_var]]), max(df[[x_var]]), length.out = 50),
+    seq(min(df[[y_var]]), max(df[[y_var]]), length.out = 50)
+  )
+  colnames(grid) <- c(x_var, y_var)
+  
+  # Add fixed variable at its median
+  grid[[fix_var]] <- median(df[[fix_var]])
+  
+  # Model matrix
+  grid_mm <- model.matrix(~ (intentionality + factivity + pictoriality)^2, data = grid)[,-1]
+  
+  # Predicted probabilities
+  probs <- predict(cv_fit_int, newx = grid_mm, type = "response", s = best_lambda)
+  probs <- as.data.frame(probs[,,1])
+  colnames(probs) <- levels(y)
+  grid <- cbind(grid, probs)
+  
+  # Long format
+  grid_long <- pivot_longer(grid, cols = colnames(probs), names_to = "cluster", values_to = "prob") %>%
+    group_by(cluster) %>%
+    mutate(prob_scaled = rescale(prob)) %>%
+    ungroup()
+  
+  # Heatmap plot
+  p <- ggplot(grid_long, aes_string(x = x_var, y = y_var, fill = "prob_scaled")) +
+    geom_tile(color = "transparent") +
+    facet_wrap(~ cluster, ncol = 1) +
+    scale_fill_viridis_c(option = "magma") +
+    labs(x = paste0(x_var, " (z-score)"),
+         y = paste0(y_var, " (z-score)"),
+         fill = "Predicted probability"
+         ) +
+    scale_y_continuous(expand = c(0,0)) +
+    scale_x_continuous(expand = c(0,0)) +
+    theme_light() +
+    theme(
+      legend.text        = element_text(size = 8),
+      legend.title       = element_text(size = 10, face = "bold", vjust = .75),
+      panel.grid = element_blank()
+    )
+
+  plots[[paste(x_var, y_var, sep = "_")]] <- p
+}
+
+# Extract legend from one plot
+get_legend <- function(p) {
+  gt <- ggplotGrob(p + theme(legend.position = "top"))
+  leg <- gt$grobs[[which(sapply(gt$grobs, function(x) x$name) == "guide-box")]]
+  leg
+}
+
+# Strip legend from all plots
+plots_clean <- lapply(plots, function(p) p + theme(legend.position = "none"))
+
+# Combine with patchwork
+combined <- (plots_clean$intentionality_factivity | 
+             plots_clean$intentionality_pictoriality | 
+             plots_clean$factivity_pictoriality) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "top")
+
+combined
+```
+
+## Robustness check: hierarchical (nested) classification
+
+Given how uneven performance is across senses (Table \ref{tab:senseAccuracy}), we checked whether a hierarchical decomposition -- first separating `"1-VIZUALIZE/PICTURE"` from the rest, then `"2-THINK/BELIVE"` from the remainder, and finally `"3-SUPPOSE/ASSUME"` from `"4-FALSE_PERCEPTION"` -- could better exploit whatever local structure exists among the harder-to-classify senses. Each split was fit as a ridge (L2) regularized logistic regression on the same three annotation dimensions and their pairwise interactions, with $\lambda$ again selected via cross-validation. This is a robustness check on the modeling strategy, not a replacement for the multinomial model reported above.
+
+```{r}
+set.seed(1847)
+
+# Node A: "1-VIZUALIZE/PICTURE" vs. the rest
+y_nodeA <- factor(ifelse(y == "1-VIZUALIZE/PICTURE", "1-VIZUALIZE/PICTURE", "REST"))
+fit_nodeA <- cv.glmnet(x_int, y_nodeA, family = "binomial", alpha = 0, type.measure = "class")
+lambda_nodeA <- fit_nodeA$lambda.min
+pred_nodeA <- predict(fit_nodeA, newx = x_int, s = lambda_nodeA, type = "class")[, 1]
+
+# Node B: among the rest, "2-THINK/BELIVE" vs. the remainder
+idx_nodeB <- y != "1-VIZUALIZE/PICTURE"
+y_nodeB <- factor(ifelse(y == "2-THINK/BELIVE", "2-THINK/BELIVE", "REST"))
+fit_nodeB <- cv.glmnet(x_int[idx_nodeB, ], y_nodeB[idx_nodeB], family = "binomial", alpha = 0, type.measure = "class")
+lambda_nodeB <- fit_nodeB$lambda.min
+pred_nodeB <- predict(fit_nodeB, newx = x_int, s = lambda_nodeB, type = "class")[, 1]
+
+# Node C: among the remainder, "3-SUPPOSE/ASSUME" vs. "4-FALSE_PERCEPTION"
+idx_nodeC <- y %in% c("3-SUPPOSE/ASSUME", "4-FALSE_PERCEPTION")
+y_nodeC <- droplevels(factor(as.character(y))[idx_nodeC])
+fit_nodeC <- cv.glmnet(x_int[idx_nodeC, ], y_nodeC, family = "binomial", alpha = 0, type.measure = "class")
+lambda_nodeC <- fit_nodeC$lambda.min
+pred_nodeC <- predict(fit_nodeC, newx = x_int, s = lambda_nodeC, type = "class")[, 1]
+
+# Node-local accuracy: how well each split does on the subset of observations it applies to
+node_accuracy <- data.frame(
+  node = c("A: 1-VIZUALIZE/PICTURE vs. rest",
+           "B: 2-THINK/BELIVE vs. rest (within non-1)",
+           "C: 3-SUPPOSE/ASSUME vs. 4-FALSE\\_PERCEPTION"),
+  n = c(nrow(x_int), sum(idx_nodeB), sum(idx_nodeC)),
+  accuracy = c(
+    mean(pred_nodeA == y_nodeA),
+    mean(pred_nodeB[idx_nodeB] == y_nodeB[idx_nodeB]),
+    mean(pred_nodeC[idx_nodeC] == y_nodeC)
+  )
+)
+
+# Cascade the per-node predictions into a single predicted sense per observation, exactly as
+# the model would be applied at prediction time: fall through to the next node only if the
+# previous node did not already claim the observation.
+pred_hier <- case_when(
+  pred_nodeA == "1-VIZUALIZE/PICTURE" ~ "1-VIZUALIZE/PICTURE",
+  pred_nodeB == "2-THINK/BELIVE"      ~ "2-THINK/BELIVE",
+  TRUE                                ~ pred_nodeC
+)
+pred_hier <- factor(pred_hier, levels = levels(y))
+
+accuracy_hier <- mean(pred_hier == y)
+conf_detail_hier <- confusionMatrix(pred_hier, y)$byClass[, c("Precision", "Recall", "F1")]
+```
+
+Table \ref{tab:nodeAccuracy} shows that, evaluated in isolation on only the observations relevant to it, each split separates reasonably well -- including the `"3-SUPPOSE/ASSUME"` vs. `"4-FALSE_PERCEPTION"` split, which reaches `r round(node_accuracy$accuracy[3] * 100, 1)`\% accuracy on its own.
+
+```{r}
+kable(
+  node_accuracy,
+  col.names = c("Split", "$n$", "Accuracy"),
+  digits = 3,
+  booktabs = TRUE,
+  escape = FALSE,
+  linesep = "",
+  format = "latex",
+  caption = "Node-local accuracy of each split in the hierarchical cascade, evaluated on the subset of observations relevant to that split.\\label{tab:nodeAccuracy}"
+) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+Chaining the splits into a single cascade -- as the model would actually be used -- tells a different story, however. Overall accuracy is `r round(accuracy_hier * 100, 1)`\%, effectively unchanged from the flat multinomial model's `r round(accuracy * 100, 1)`\% (Table \ref{tab:hierAccuracy}). `"3-SUPPOSE/ASSUME"` is still never recovered (`r round(conf_detail_hier["Class: 3-SUPPOSE/ASSUME", "Recall"] * 100, 1)`\% recall), and `"4-FALSE_PERCEPTION"` improves only modestly (`r round(conf_detail_hier["Class: 4-FALSE_PERCEPTION", "Recall"] * 100, 1)`\% recall, up from `r round(conf_detail["Class: 4-FALSE_PERCEPTION", "Recall"] * 100, 1)`\% in the flat model).
+
+```{r}
+kable(
+  conf_detail_hier,
+  booktabs = TRUE,
+  format = "latex",
+  linesep = "",
+  caption = "Hierarchical model: precision, recall, and F1 by sense.\\label{tab:hierAccuracy}"
+) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+The discrepancy between the node-local and cascaded results is explained by where `"3-SUPPOSE/ASSUME"` observations actually end up: nearly all of them are already claimed by node A or node B before ever reaching node C, where the 3-vs-4 split would otherwise do reasonably well. The node C split is locally accurate but almost never reached by genuine `"3-SUPPOSE/ASSUME"` tokens in practice, because they are indistinguishable from `"1-VIZUALIZE/PICTURE"` and `"2-THINK/BELIVE"` earlier in the cascade. This is consistent with the pairwise KDE overlap analysis (Table \ref{tab:overlap}) and the distributions in Figure \ref{fig:distributions}, which already showed no distinct feature-space region for `"3-SUPPOSE/ASSUME"`: the bottleneck is a lack of separating signal in the three annotation dimensions themselves, not the flat multinomial model's shared parameterization. Hierarchical decomposition therefore does not resolve the poor recoverability of `"3-SUPPOSE/ASSUME"` and `"4-FALSE_PERCEPTION"`.
+
+## Robustness check: coder-reliability weighted models
+
+The three annotation dimensions are themselves aggregates over multiple coders, and the coder-agreement analysis above (Table \ref{tab:coderAgreement}) showed that agreement varies considerably by sense and dimension. We checked whether accounting for this -- downweighting rows and dimensions where coders disagreed more -- changes the model's ability to recover `"3-SUPPOSE/ASSUME"` and `"4-FALSE_PERCEPTION"`. For each observation and each dimension we computed the standard deviation across that row's available raw coder scores (three coders, N/D/E, for tokens no. 1--100; two coders, D/N, for tokens no. 101--1000 -- SD is well-defined for either count, so no special-casing is needed). Reliability was then defined as $w = 1 / (1 + \text{SD})$, so perfectly agreeing coders yield $w=1$ and reliability decays as disagreement grows. Because `glmnet` only accepts a single weight per observation, not one per feature per observation, we tried three different ways of injecting this row- and dimension-specific reliability into the same ridge multinomial model used above, none of which replace it.
+
+```{r}
+sd_row <- function(...) {
+  vals <- c(...)
+  vals <- vals[!is.na(vals)]
+  if (length(vals) < 2) return(NA_real_)
+  sd(vals)
+}
+
+df_reliability <- df_add %>%
+  rowwise() %>%
+  mutate(
+    intentionality_sd = sd_row(intentionality_N, intentionality_D, intentionality_E),
+    factivity_sd       = sd_row(factivity_N, factivity_D, factivity_E),
+    pictoriality_sd     = sd_row(pictoriality_N, pictoriality_D, pictoriality_E)
+  ) %>%
+  ungroup()
+
+n_missing_sd <- c(
+  intentionality = sum(is.na(df_reliability$intentionality_sd)),
+  factivity = sum(is.na(df_reliability$factivity_sd)),
+  pictoriality = sum(is.na(df_reliability$pictoriality_sd))
+)
+
+df_reliability <- df_reliability %>%
+  mutate(
+    intentionality_sd = ifelse(is.na(intentionality_sd), median(intentionality_sd, na.rm = TRUE), intentionality_sd),
+    factivity_sd       = ifelse(is.na(factivity_sd), median(factivity_sd, na.rm = TRUE), factivity_sd),
+    pictoriality_sd     = ifelse(is.na(pictoriality_sd), median(pictoriality_sd, na.rm = TRUE), pictoriality_sd),
+    rel_intentionality = 1 / (1 + intentionality_sd),
+    rel_factivity       = 1 / (1 + factivity_sd),
+    rel_pictoriality     = 1 / (1 + pictoriality_sd)
+  )
+```
+
+The `r n_missing_sd["intentionality"]`, `r n_missing_sd["factivity"]`, and `r n_missing_sd["pictoriality"]` rows with fewer than two usable raw scores for intentionality, factivity, and pictoriality respectively were imputed with that dimension's corpus median SD, a neutral "typical reliability" placeholder, before computing the weights below.
+
+**Variant 1 -- attenuate the feature values.** For each row and dimension we multiply the $z$-scored value by that row's own reliability weight for that dimension *before* forming the main effects and interactions, so noisier per-row measurements are shrunk toward zero and contribute less to the fit -- preserving the row- and dimension-specific granularity, at the cost of changing the actual feature values the model sees rather than just their loss weight.
+
+```{r}
+df_atten <- df %>%
+  mutate(
+    intentionality = intentionality * df_reliability$rel_intentionality,
+    factivity       = factivity * df_reliability$rel_factivity,
+    pictoriality     = pictoriality * df_reliability$rel_pictoriality
+  )
+x_int_v1 <- model.matrix(~ (intentionality + factivity + pictoriality)^2, data = df_atten)[,-1]
+
+set.seed(1847)
+cv_fit_v1 <- cv.glmnet(x_int_v1, y, family = "multinomial", alpha = 0, type.measure = "class")
+lambda_v1 <- cv_fit_v1$lambda.min
+pred_v1 <- factor(predict(cv_fit_v1, newx = x_int_v1, s = lambda_v1, type = "class")[, 1], levels = levels(y))
+accuracy_v1 <- mean(pred_v1 == y)
+conf_detail_v1 <- confusionMatrix(pred_v1, y)$byClass[, c("Precision", "Recall", "F1")]
+```
+
+**Variant 2 -- a single per-row weight.** We collapse the three dimension-specific reliabilities into one weight per row (their average) and pass it to `glmnet`'s native `weights` argument, leaving the feature values themselves untouched. This is the more standard "weighted regression" reading, at the cost of no longer distinguishing a row that is reliable on one dimension but noisy on another.
+
+```{r}
+row_weight <- rowMeans(cbind(df_reliability$rel_intentionality, df_reliability$rel_factivity, df_reliability$rel_pictoriality))
+
+set.seed(1847)
+cv_fit_v2 <- cv.glmnet(x_int, y, family = "multinomial", alpha = 0, type.measure = "class", weights = row_weight)
+lambda_v2 <- cv_fit_v2$lambda.min
+pred_v2 <- factor(predict(cv_fit_v2, newx = x_int, s = lambda_v2, type = "class")[, 1], levels = levels(y))
+accuracy_v2 <- mean(pred_v2 == y)
+conf_detail_v2 <- confusionMatrix(pred_v2, y)$byClass[, c("Precision", "Recall", "F1")]
+```
+
+**Variant 3 -- a corpus-wide penalty per dimension.** Instead of a row-level adjustment, we compute one reliability score per dimension across the whole corpus (its mean SD) and translate that into `glmnet`'s `penalty.factor`, so that a systematically noisier dimension is shrunk more by the ridge penalty; an interaction term's penalty is the product of its two parent dimensions' penalties. This ignores row-to-row variation entirely, but is the reading closest to "weight the feature dimensions" taken literally.
+
+```{r}
+mean_sd <- c(
+  intentionality = mean(df_reliability$intentionality_sd),
+  factivity       = mean(df_reliability$factivity_sd),
+  pictoriality     = mean(df_reliability$pictoriality_sd)
+)
+penalty_main <- 1 + mean_sd # higher disagreement -> higher penalty -> more shrinkage
+penalty_vec <- sapply(colnames(x_int), function(cn) prod(penalty_main[strsplit(cn, ":")[[1]]]))
+
+set.seed(1847)
+cv_fit_v3 <- cv.glmnet(x_int, y, family = "multinomial", alpha = 0, type.measure = "class", penalty.factor = penalty_vec)
+lambda_v3 <- cv_fit_v3$lambda.min
+pred_v3 <- factor(predict(cv_fit_v3, newx = x_int, s = lambda_v3, type = "class")[, 1], levels = levels(y))
+accuracy_v3 <- mean(pred_v3 == y)
+conf_detail_v3 <- confusionMatrix(pred_v3, y)$byClass[, c("Precision", "Recall", "F1")]
+```
+
+Table \ref{tab:weightedComparison} compares overall accuracy and per-sense recall across the unweighted model and all three weighted variants.
+
+```{r}
+weighted_comparison <- data.frame(
+  Model = c("Baseline (unweighted)", "V1: attenuated features", "V2: per-row weight", "V3: per-dim. penalty"),
+  Accuracy = c(accuracy, accuracy_v1, accuracy_v2, accuracy_v3),
+  `1-VIZUALIZE/PICTURE` = c(conf_detail["Class: 1-VIZUALIZE/PICTURE", "Recall"], conf_detail_v1["Class: 1-VIZUALIZE/PICTURE", "Recall"], conf_detail_v2["Class: 1-VIZUALIZE/PICTURE", "Recall"], conf_detail_v3["Class: 1-VIZUALIZE/PICTURE", "Recall"]),
+  `2-THINK/BELIVE` = c(conf_detail["Class: 2-THINK/BELIVE", "Recall"], conf_detail_v1["Class: 2-THINK/BELIVE", "Recall"], conf_detail_v2["Class: 2-THINK/BELIVE", "Recall"], conf_detail_v3["Class: 2-THINK/BELIVE", "Recall"]),
+  `3-SUPPOSE/ASSUME` = c(conf_detail["Class: 3-SUPPOSE/ASSUME", "Recall"], conf_detail_v1["Class: 3-SUPPOSE/ASSUME", "Recall"], conf_detail_v2["Class: 3-SUPPOSE/ASSUME", "Recall"], conf_detail_v3["Class: 3-SUPPOSE/ASSUME", "Recall"]),
+  `4-FALSE_PERCEPTION` = c(conf_detail["Class: 4-FALSE_PERCEPTION", "Recall"], conf_detail_v1["Class: 4-FALSE_PERCEPTION", "Recall"], conf_detail_v2["Class: 4-FALSE_PERCEPTION", "Recall"], conf_detail_v3["Class: 4-FALSE_PERCEPTION", "Recall"]),
+  check.names = FALSE
+)
+
+kable(
+  weighted_comparison,
+  col.names = c("Model", "Acc.", "Recall 1", "Recall 2", "Recall 3", "Recall 4"),
+  digits = 3,
+  booktabs = TRUE,
+  escape = FALSE,
+  linesep = "",
+  format = "latex",
+  caption = "Overall accuracy and per-sense recall: unweighted model vs. three coder-reliability weighted variants. Recall 1--4 refer to \\texttt{1-VIZUALIZE/PICTURE}, \\texttt{2-THINK/BELIVE}, \\texttt{3-SUPPOSE/ASSUME}, and \\texttt{4-FALSE\\_PERCEPTION} respectively.\\label{tab:weightedComparison}"
+) %>%
+  kable_styling(latex_options = "HOLD_position", font_size = 9)
+```
+
+None of the three weighting schemes improve recovery of `"3-SUPPOSE/ASSUME"` (recall stays at `r round(conf_detail_v1["Class: 3-SUPPOSE/ASSUME", "Recall"], 3)` in all three variants, same as the unweighted model) or `"4-FALSE_PERCEPTION"` (recall is flat or slightly worse than the unweighted model's `r round(conf_detail["Class: 4-FALSE_PERCEPTION", "Recall"] * 100, 1)`\%). Overall accuracy is essentially unchanged or marginally lower across all three variants. This is a second, independent robustness check pointing to the same conclusion as the hierarchical model above: the difficulty in recovering `"3-SUPPOSE/ASSUME"` and `"4-FALSE_PERCEPTION"` is not an artifact of noisy per-row annotation that reliability weighting could correct for -- it reflects a genuine lack of separating signal between these senses and `"1-VIZUALIZE/PICTURE"`/`"2-THINK/BELIVE"` in the three annotation dimensions themselves.
+
+## Robustness check: interaction order and a nonparametric ceiling
+
+The model above assumes a specific functional form: main effects plus all pairwise interactions between the three annotation dimensions. We checked whether that assumption, rather than the dimensions themselves, is limiting recovery of `"3-SUPPOSE/ASSUME"` and `"4-FALSE_PERCEPTION"`, in two ways. First, since there are only three predictors, extending the ridge model to include the full three-way interaction costs a single extra column and is essentially free to try. Second, and more informatively, we fit a fully nonparametric random forest on the same three raw features with no manually specified interaction terms at all, as an upper bound on what *any* function of these three features -- linear, polynomial, or otherwise -- could achieve.
+
+```{r}
+x_int_3way <- model.matrix(~ (intentionality + factivity + pictoriality)^3, data = df)[,-1]
+
+set.seed(1847)
+cv_fit_3way <- cv.glmnet(x_int_3way, y, family = "multinomial", alpha = 0, type.measure = "class")
+lambda_3way <- cv_fit_3way$lambda.min
+pred_3way <- factor(predict(cv_fit_3way, newx = x_int_3way, s = lambda_3way, type = "class")[, 1], levels = levels(y))
+accuracy_3way <- mean(pred_3way == y)
+conf_detail_3way <- confusionMatrix(pred_3way, y)$byClass[, c("Precision", "Recall", "F1")]
+```
+
+```{r}
+set.seed(1847)
+rf_fit <- randomForest(sense ~ intentionality + factivity + pictoriality, data = df, ntree = 1000)
+
+# In-sample (training) predictions are optimistic, since each tree has seen most rows during
+# fitting; out-of-bag (OOB) predictions -- each row scored only by the trees that did not use
+# it for training -- are the honest, held-out-like estimate and the one we report as "the"
+# random forest result below.
+pred_rf_train <- predict(rf_fit, df)
+accuracy_rf_train <- mean(pred_rf_train == y)
+conf_detail_rf_train <- confusionMatrix(pred_rf_train, y)$byClass[, c("Precision", "Recall", "F1")]
+
+pred_rf_oob <- rf_fit$predicted
+accuracy_rf_oob <- mean(pred_rf_oob == y)
+conf_detail_rf_oob <- confusionMatrix(pred_rf_oob, y)$byClass[, c("Precision", "Recall", "F1")]
+```
+
+Table \ref{tab:interactionComparison} compares the baseline two-way model, the three-way interaction, and the random forest (both in-sample and OOB) on overall accuracy and per-sense recall.
+
+```{r}
+interaction_comparison <- data.frame(
+  Model = c("Baseline (2-way)", "3-way interaction", "Random forest (in-sample)", "Random forest (OOB)"),
+  Accuracy = c(accuracy, accuracy_3way, accuracy_rf_train, accuracy_rf_oob),
+  `1-VIZUALIZE/PICTURE` = c(conf_detail["Class: 1-VIZUALIZE/PICTURE", "Recall"], conf_detail_3way["Class: 1-VIZUALIZE/PICTURE", "Recall"], conf_detail_rf_train["Class: 1-VIZUALIZE/PICTURE", "Recall"], conf_detail_rf_oob["Class: 1-VIZUALIZE/PICTURE", "Recall"]),
+  `2-THINK/BELIVE` = c(conf_detail["Class: 2-THINK/BELIVE", "Recall"], conf_detail_3way["Class: 2-THINK/BELIVE", "Recall"], conf_detail_rf_train["Class: 2-THINK/BELIVE", "Recall"], conf_detail_rf_oob["Class: 2-THINK/BELIVE", "Recall"]),
+  `3-SUPPOSE/ASSUME` = c(conf_detail["Class: 3-SUPPOSE/ASSUME", "Recall"], conf_detail_3way["Class: 3-SUPPOSE/ASSUME", "Recall"], conf_detail_rf_train["Class: 3-SUPPOSE/ASSUME", "Recall"], conf_detail_rf_oob["Class: 3-SUPPOSE/ASSUME", "Recall"]),
+  `4-FALSE_PERCEPTION` = c(conf_detail["Class: 4-FALSE_PERCEPTION", "Recall"], conf_detail_3way["Class: 4-FALSE_PERCEPTION", "Recall"], conf_detail_rf_train["Class: 4-FALSE_PERCEPTION", "Recall"], conf_detail_rf_oob["Class: 4-FALSE_PERCEPTION", "Recall"]),
+  check.names = FALSE
+)
+
+kable(
+  interaction_comparison,
+  col.names = c("Model", "Acc.", "Recall 1", "Recall 2", "Recall 3", "Recall 4"),
+  digits = 3,
+  booktabs = TRUE,
+  escape = FALSE,
+  linesep = "",
+  format = "latex",
+  caption = "Overall accuracy and per-sense recall: baseline two-way model vs. three-way interaction and random forest. Recall 1--4 refer to \\texttt{1-VIZUALIZE/PICTURE}, \\texttt{2-THINK/BELIVE}, \\texttt{3-SUPPOSE/ASSUME}, and \\texttt{4-FALSE\\_PERCEPTION} respectively.\\label{tab:interactionComparison}"
+) %>%
+  kable_styling(latex_options = "HOLD_position", font_size = 9)
+```
+
+The three-way interaction changes almost nothing (`r round(accuracy * 100, 1)`\% $\to$ `r round(accuracy_3way * 100, 1)`\% accuracy; `"3-SUPPOSE/ASSUME"` recall stays at `r round(conf_detail_3way["Class: 3-SUPPOSE/ASSUME", "Recall"], 3)`), so interaction order beyond pairwise terms is not the bottleneck. The random forest tells a more mixed story. Its in-sample accuracy (`r round(accuracy_rf_train * 100, 1)`\%) is inflated by overfitting -- unsurprising given how flexible the model is relative to the sample size, especially for the smaller senses -- but the honest, OOB accuracy (`r round(accuracy_rf_oob * 100, 1)`\%) is close to the baseline overall. Sense-by-sense, though, OOB recall for `"4-FALSE_PERCEPTION"` rises to `r round(conf_detail_rf_oob["Class: 4-FALSE_PERCEPTION", "Recall"] * 100, 1)`\%, roughly double the baseline's `r round(conf_detail["Class: 4-FALSE_PERCEPTION", "Recall"] * 100, 1)`\%, while `"3-SUPPOSE/ASSUME"` remains essentially unrecoverable at `r round(conf_detail_rf_oob["Class: 3-SUPPOSE/ASSUME", "Recall"] * 100, 1)`\% even under a fully flexible model. This suggests the linear/fixed-interaction-order assumption of the ridge multinomial genuinely was somewhat limiting for `"4-FALSE_PERCEPTION"` specifically -- a nonlinear or non-additive combination of the three dimensions carries some real, if modest, signal for that sense -- whereas `"3-SUPPOSE/ASSUME"` still shows no recoverable signal even when the model is allowed to be maximally flexible, reinforcing the conclusion from the two robustness checks above for that sense specifically.
+
+# Embedding analysis
+
+In addition to the statistical analysis, we leveraged contextual embeddings of sentences containing the term \textit{imagine} to investigate how different senses of the word are represented in latent semantic space. This embedding analysis explores the geometric structure of the representations, the relationship between semantic similarity and sense membership, and the alignment of embeddings with the annotated semantic dimensions. The approach provides a comprehensive view of how contextual usage patterns are captured by the language model (BERT) and how they relate to theoretical distinctions between senses.
+
+## Sense overlap based on centroid distance
+
+For each sense, we computed the cosine distance of every \textit{imagine} token embedding to its own sense centroid and to the other sense centroids. We then estimated the kernel density (KDE) distributions of these distances and calculated the overlap between the densities. The resulting overlap scores quantify how well each sense cluster is discriminated from the others in centroid space. Importantly, this metric measures discriminability from cluster centers, not the actual geometric overlap of the clusters themselves. It essentially answers the question: "If I pick a token at random from Sense 1, how often could it be mistaken for Sense 2 based on centroid proximity?" This approach does not account for the internal distribution of embeddings within a cluster. Two clusters could substantially overlap in the embedding space, yet the distance-to-centroid measure might still suggest low overlap if tokens happen to be near their respective centroids.
+
+Figure \ref{fig:KDEdistanceCentroid_ownVSother} shows the cosine distance of tokens for each sense to their own sense-centroid and the other sense-centroids. The overlap fractions are detailed in Figure \ref{fig:centroidOverlapHeatmap}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{../../output/plots/overlap_density_v3.png}
+    \caption{Centroid-based overlap.}
+    \label{fig:KDEdistanceCentroid_ownVSother}
+\end{figure}
+
+```{r, fig.cap="Centroid-based overlap fractions.\\label{fig:centroidOverlapHeatmap}", fig.align='center', out.width="0.6\\linewidth", fig.pos="h"}
+c_overlap <- read.table("../../output/stats/overlap_density_estimates_v3.txt")
+
+colnames(c_overlap) <- c("From", "vs", "To", "Overlap")
+
+# Escape underscores if you need LaTeX later
+c_overlap <- c_overlap %>%
+  mutate(across(c(From, To), ~ gsub("_", " ", ., fixed = TRUE)))
+
+# Define ordering
+order <- c(
+  "1-VIZUALIZE/PICTURE",
+  "2-THINK/BELIVE",
+  "3-SUPPOSE/ASSUME",
+  "4-FALSE PERCEPTION"
+)
+
+c_overlap <- c_overlap %>%
+  mutate(
+    From = factor(From, levels = order),
+    To = factor(To, levels = order)
+  )
+
+ggplot(c_overlap, aes(To, From, fill = Overlap)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = sprintf("%.2f", Overlap)), size = 4, color = ifelse(c_overlap$Overlap < .6, "white", "black")) +
+  scale_fill_viridis_c(
+    option = "C",
+    limits = c(0.3, 0.9),
+    breaks = c(0.3, 0.6, 0.9)
+  ) +
+  coord_equal() +
+  labs(
+    x = NULL,
+    y = NULL,
+    fill = "Overlap"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+## Geometric overlap
+
+To complement the centroid-based distances, we also computed overlap directly on the embedding distributions for each sense. For this, we estimated KDE functions over the embeddings themselves (after 1D and 2D PCA reduction). This yields how much of the geometric "surface" of one cluster is occupied by the other. Unlike the centroid-based overlap, which measures discriminability relative to cluster centers, this method captures actual geometric overlap in embedding space. High overlap here indicates that embeddings of the two senses physically occupy the same regions, reflecting semantic entanglement or ambiguity. Low overlap indicates that the clusters are well-separated in latent space, regardless of centroid proximity. Thus, this analysis provides a more direct estimate of semantic distinctiveness at the token level, whereas centroid distances summarize separability from the average cluster location. The overlap in 1D and 2D space is shown in Figure \ref{fig:KDEsurface}. Figure \ref{fig:kde1dHeatmap} \& \ref{fig:kde2dHeatmap} detail the overlap fractions, for 1D and 2D respectively.
+
+\begin{figure}
+\centering
+    \caption{Geometric overlap of different senses in embedding space.}
+    \label{fig:KDEsurface}
+    \begin{subfigure}[b]{0.6\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{../../output/plots/kde1D_embeddings_overlap_v3.png}
+    \caption{\label{fig:KDEsurface1D}}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.38\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{../../output/plots/kde2D_embeddings_overlap_v3.png}
+    \caption{\label{fig:KDEsurface1D}}
+    \end{subfigure}
+\end{figure}
+
+```{r, fig.cap="1D KDE overlap fractions.\\label{fig:kde1dHeatmap}", fig.align='center', out.width="0.6\\linewidth", fig.pos="h"}
+kde1d <- read.table("../../output/stats/kde1D_sense_specific_overlap_embeddings_v3.txt")
+
+colnames(kde1d) <- c("From", "vs", "To", "Overlap")
+
+# Escape underscores if you need LaTeX later
+kde1d <- kde1d %>%
+  mutate(across(c(From, To), ~ gsub("_", " ", ., fixed = TRUE)))
+
+# Define ordering
+order <- c(
+  "1-VIZUALIZE/PICTURE",
+  "2-THINK/BELIVE",
+  "3-SUPPOSE/ASSUME",
+  "4-FALSE PERCEPTION"
+)
+
+kde1d <- kde1d %>%
+  mutate(
+    From = factor(From, levels = order),
+    To = factor(To, levels = order)
+  )
+
+ggplot(kde1d, aes(To, From, fill = Overlap)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = sprintf("%.2f", Overlap)), size = 4, color = ifelse(kde1d$Overlap < .6, "white", "black")) +
+  scale_fill_viridis_c(
+    option = "C",
+    limits = c(0.2, 0.9),
+    breaks = c(0.2, 0.55, 0.9)
+  ) +
+  coord_equal() +
+  labs(
+    x = NULL,
+    y = NULL,
+    fill = "Overlap"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+```{r, fig.cap="2D KDE overlap fractions.\\label{fig:kde2dHeatmap}", fig.align='center', out.width="0.6\\linewidth", fig.pos="h"}
+kde2d <- read.table("../../output/stats/kde2D_sense_specific_overlap_embeddings_v3.txt")
+
+colnames(kde2d) <- c("From", "vs", "To", "Overlap")
+
+# Escape underscores if you need LaTeX later
+kde2d <- kde2d %>%
+  mutate(across(c(From, To), ~ gsub("_", " ", ., fixed = TRUE)))
+
+# Define ordering
+order <- c(
+  "1-VIZUALIZE/PICTURE",
+  "2-THINK/BELIVE",
+  "3-SUPPOSE/ASSUME",
+  "4-FALSE PERCEPTION"
+)
+
+kde2d <- kde2d %>%
+  mutate(
+    From = factor(From, levels = order),
+    To = factor(To, levels = order)
+  )
+
+ggplot(kde2d, aes(To, From, fill = Overlap)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = sprintf("%.2f", Overlap)), size = 4, color = ifelse(kde2d$Overlap < .6, "white", "black")) +
+  scale_fill_viridis_c(
+    option = "C",
+    limits = c(0.15, 0.9),
+    breaks = c(0.15, 0.5, 0.9)
+  ) +
+  coord_equal() +
+  labs(
+    x = NULL,
+    y = NULL,
+    fill = "Overlap"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+
+## Embedding similarity vs sense similarity
+
+To examine whether sentence embeddings capture sense membership, we computed pairwise cosine similarities between all sentence embeddings. For comparison, a binary matrix indicated whether each sentence pair belonged to the same annotated sense (1) or different senses (0). We then correlated the upper-triangle values of the embedding similarity matrix with the corresponding sense similarity values using Spearman’s rank correlation. Visualization of the results was achieved by plotting KDE of embedding similarities for sentence pairs with the same sense versus different senses. Higher cosine similarity for same-sense pairs relative to different-sense pairs indicates that embeddings encode semantic sense information. The Spearman correlation quantifies the degree to which semantic closeness in embedding space aligns with sense membership, providing a global measure of clustering in the latent space. Unlike centroid-based or geometric overlap, this is a global, distribution-agnostic summary statistic: it does not explicitly consider clusters or shapes, only relative similarity between pairs of sentences.
+
+```{r}
+sim_stats <- readLines("../../output/stats/embedding_vs_sense_similarity_v3.txt")
+rho_sim <- as.numeric(sub(".*: ", "", sim_stats[1]))
+pval_sim <- as.numeric(sub(".*: ", "", sim_stats[2]))
+pval_sim_str <- ifelse(pval_sim < 0.001, "p < 0.001", paste0("p = ", signif(pval_sim, 3)))
+```
+
+Figure \ref{fig:matrixComparison} shows the distribution of pairwise cosine similarities between sentence embeddings, separated by whether the sentences share the same sense (red) or have different senses (blue). Embeddings of sentences with the same sense tend to be more similar, as evidenced by the right-shifted red distribution relative to the blue distribution. This pattern is quantified by a Spearman correlation of $\rho = `r round(rho_sim, 3)`$ (`r pval_sim_str`), indicating a moderate positive association between embedding similarity and sense membership.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{../../output/plots/embedding_vs_sense_similarity_v3.png}
+    \caption{Cosine similarity between same-sense and other-sense tokens of \textit{imagine}.}
+    \label{fig:matrixComparison}
+\end{figure}
+
+## Senses under embedding projection
+
+To examine how sentence embeddings capture the annotated senses along the three feature dimensions, we trained ridge-regularized regression models predicting each z-scaled dimension from the sentence embeddings. The regression coefficients define a direction in embedding space along which the dimension increases. By projecting each sentence embedding onto these directions, we obtain an embedding-based estimate for that dimension. This procedure was repeated for all three dimensions, resulting in a 3D projection of each sentence in the space spanned by the semantic dimensions.
+
+Here is a more detailed rundown of the analysis: Let $\mathbf{X} \in \mathbb{R}^{n \times d}$ denote the matrix of sentence embeddings, where $n$ is the number of sentences and $d = 768$ the embedding dimension. Let $\mathbf{y}^{(k)} \in \mathbb{R}^n$ be the vector of z-scaled ratings for semantic dimension $k \in \{\text{intentionality, factivity, pictoriality}\}$.
+
+We fit a ridge-regularized regression model for each dimension:
+
+\[
+\hat{\boldsymbol{\beta}}^{(k)} = \operatorname*{arg\,min}_{\boldsymbol{\beta}} \left\lVert \mathbf{y}^{(k)} - \mathbf{X}\boldsymbol{\beta} \right\rVert_2^2 + \alpha \left\lVert \boldsymbol{\beta} \right\rVert_2^2,
+\]
+
+where $\alpha \geq 0$ is a penalty strength selected via cross-validation. Because $d = 768$ is close to $n$ (the number of annotated tokens), an unregularized fit would essentially memorize the training data without generalizing; the ridge penalty shrinks $\hat{\boldsymbol{\beta}}^{(k)}$ toward a more stable, generalizable direction, the same regularization strategy used throughout the rest of this report's models. The estimated coefficients $\hat{\boldsymbol{\beta}}^{(k)} \in \mathbb{R}^d$ define a direction in embedding space corresponding to increases in dimension $k$.
+
+The projection of each sentence embedding $\mathbf{x}_i$ onto this direction provides an embedding-based estimate of the semantic dimension:
+
+\[
+\hat{y}^{(k)}_i = \mathbf{x}_i^\top \hat{\boldsymbol{\beta}}^{(k)}, \quad i = 1, \dots, n.
+\]
+
+By computing these projections for all three dimensions, each sentence is represented in a 3D space spanned by the semantic directions, allowing visualization and analysis of how embeddings capture the annotated semantic structure.
+
+```{r}
+proj_r2 <- read.table("../../output/stats/embedding_projection_r2_v3.txt", header = TRUE, sep = "\t") %>%
+  mutate(dimension = str_to_title(dimension))
+
+kable(
+  proj_r2,
+  col.names = c("Dimension", "$\\alpha$", "In-sample $R^2$", "5-fold CV $R^2$", "CV SD"),
+  digits = 3,
+  booktabs = TRUE,
+  escape = FALSE,
+  linesep = "",
+  format = "latex",
+  caption = "Ridge regression fit predicting each feature dimension from sentence embeddings: in-sample and 5-fold cross-validated $R^2$.\\label{tab:projectionR2}"
+) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+Table \ref{tab:projectionR2} shows that the in-sample $R^2$ is optimistic relative to the honest, cross-validated estimate, as expected -- but the cross-validated $R^2$ itself is far from zero: `r round(proj_r2$r2_cv_mean[proj_r2$dimension == "Intentionality"], 2)` for intentionality, `r round(proj_r2$r2_cv_mean[proj_r2$dimension == "Pictoriality"], 2)` for pictoriality, and `r round(proj_r2$r2_cv_mean[proj_r2$dimension == "Factivity"], 2)` for factivity. The embeddings therefore do carry substantial, generalizable information about these dimensions -- particularly intentionality -- contrary to what a purely visual read of the projection space might suggest.
+
+Figure \ref{fig:3Dprojection} shows the 3D projection of sentence embeddings onto the directions corresponding to the feature dimensions. `"1-VIZUALIZE/PICTURE"` (red) separates fairly clearly from the other three senses along the intentionality axis, consistent with both the cross-validated $R^2$ above and the intentionality ceiling effect for this sense documented in Figure \ref{fig:distributions}. `"2-THINK/BELIVE"`, `"3-SUPPOSE/ASSUME"`, and `"4-FALSE_PERCEPTION"`, however, remain thoroughly intermixed with each other in this space. This is not a sign that the embeddings fail to encode the feature dimensions -- the $R^2$ values above show they do -- but rather that, once the dimensions are reconstructed from the embeddings, `"2-THINK/BELIVE"`, `"3-SUPPOSE/ASSUME"`, and `"4-FALSE_PERCEPTION"` occupy overlapping regions of that space, mirroring the same pattern documented throughout this report (Figure \ref{fig:distributions}, Table \ref{tab:overlap}, and the predictive modeling robustness checks): `"1-VIZUALIZE/PICTURE"` is comparatively well-defined, while the other three senses are not cleanly separated by these three dimensions, however they are estimated.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{../../output/plots/embedding_projection_3D_v3.png}
+    \caption{3D embedding projections.}
+    \label{fig:3Dprojection}
+\end{figure}
+
+Figure \ref{fig:2Dprojection} depicts 2-dimensional KDE plots for all combinations of dimensions. `"1-VIZUALIZE/PICTURE"` again stands out as a distinct high-density region (most visibly against pictoriality), while the other three senses' contours overlap heavily throughout.
+
+\begin{figure}
+\centering
+    \caption{2D embedding projections.}
+    \label{fig:2Dprojection}
+    \begin{subfigure}[b]{0.30\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{../../output/plots/embedding_projection_intentionality_factivity_2D_core_v3.png}
+    \caption{Intentionality $vs$ factivity\label{fig:2D_IF}}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.30\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{../../output/plots/embedding_projection_intentionality_pictoriality_2D_core_v3.png}
+    \caption{Intentionality $vs$ pictoriality. \label{fig:2D_IP}}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.30\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{../../output/plots/embedding_projection_factivity_pictoriality_2D_core_v3.png}
+    \caption{Factivity $vs$ pictoriality. \label{fig:2D_FP}}
+    \end{subfigure}
+\end{figure}
+
+## Robustness check: sensitivity to embedding-layer choice
+
+Every analysis above uses the raw last hidden layer of BERT for each token's embedding. The very last layer is somewhat specialized toward BERT's masked-language-modeling pretraining objective, and middle-to-late layers -- or an average across the last several layers -- have been reported elsewhere to sometimes carry semantic content at least as well (e.g. Ethayarajh 2019). We checked whether this choice matters by repeating the centroid-based analysis with two alternatives: the second-to-last hidden layer, and the average of the last four hidden layers. The three variants were compared pairwise with two metrics suited to what is actually being compared: Cohen's $\kappa$ on each token's nearest-centroid sense (a categorical assignment, for which chance-corrected agreement is the natural fit), and Spearman's $\rho$ on the per-sense-pair centroid-overlap fractions from Figure \ref{fig:centroidOverlapHeatmap} above (continuous scores, for which a rank correlation between the score vectors shows directly whether the variants agree on which sense pairs overlap most and least).
+
+```{r}
+variant_lines <- readLines("../../output/stats/embedding_variant_agreement_v3.txt")
+
+kappa_start <- which(grepl("Cohen's kappa", variant_lines)) + 1
+kappa_df <- do.call(rbind, lapply(variant_lines[kappa_start:(kappa_start + 2)], function(l) {
+  parts <- strsplit(trimws(l), "\t")[[1]]
+  data.frame(pair = parts[1], kappa = as.numeric(parts[2]))
+}))
+
+rho_start <- which(grepl("Spearman rho", variant_lines)) + 1
+rho_df <- do.call(rbind, lapply(variant_lines[rho_start:(rho_start + 2)], function(l) {
+  parts <- strsplit(trimws(l), "\t")[[1]]
+  data.frame(pair = parts[1], rho = as.numeric(parts[2]))
+}))
+
+variant_agreement <- merge(kappa_df, rho_df, by = "pair") %>%
+  mutate(pair = gsub("_", " ", pair, fixed = TRUE))
+
+kable(
+  variant_agreement,
+  col.names = c("Variant pair", "Cohen's $\\kappa$", "Spearman $\\rho$"),
+  digits = 3,
+  booktabs = TRUE,
+  escape = FALSE,
+  linesep = "",
+  format = "latex",
+  caption = "Pairwise agreement between embedding-layer variants: nearest-centroid sense classification (Cohen's $\\kappa$) and centroid-overlap fractions (Spearman $\\rho$).\\label{tab:variantAgreement}"
+) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+Table \ref{tab:variantAgreement} shows that all three layer variants agree closely: Cohen's $\kappa$ ranges from `r round(min(variant_agreement$kappa), 3)` to `r round(max(variant_agreement$kappa), 3)` (conventionally interpreted as "almost perfect" agreement, $\kappa > 0.8$), and Spearman's $\rho$ ranges from `r round(min(variant_agreement$rho), 3)` to `r round(max(variant_agreement$rho), 3)`. In other words, which BERT layer(s) the token embedding is read from does not materially change either which sense a token's embedding is classified as (by nearest centroid) or the overall pattern of pairwise sense overlap reported throughout this section. The last-layer embeddings used above are therefore a reasonable, representative choice, not an idiosyncratic one that happens to drive the reported conclusions.
+
+# Appendix
+
+```{r}
+# Compute distributional overlap
+features <- c("intentionality", "factivity", "pictoriality")
+sense_pairs <- combn(levels(df$sense), 2, simplify = FALSE)
+
+overlap_results <- map_dfr(features, function(feat) {
+  map_dfr(sense_pairs, function(pair) {
+    s1 <- pair[1]
+    s2 <- pair[2]
+    
+    d1 <- df %>% filter(sense == s1) %>% pull(!!sym(feat))
+    d2 <- df %>% filter(sense == s2) %>% pull(!!sym(feat))
+    
+    # KDEs on common grid
+    xs <- seq(min(c(d1, d2)), max(c(d1, d2)), length.out = 200)
+    kde1 <- density(d1, from = min(xs), to = max(xs), n = 200)$y
+    kde2 <- density(d2, from = min(xs), to = max(xs), n = 200)$y
+    
+    # Overlap measures
+    overlap_sym  <- pracma::trapz(xs, pmin(kde1, kde2))
+    overlap_s1   <- overlap_sym / pracma::trapz(xs, kde1)
+    overlap_s2   <- overlap_sym / pracma::trapz(xs, kde2)
+    
+    data.frame(
+      feature          = feat,
+      sense1           = s1,
+      sense2           = s2,
+      overlap_symmetric = overlap_sym,
+      overlap_s1       = overlap_s1,
+      overlap_s2       = overlap_s2
+    )
+  })
+})
+
+kable(overlap_results %>% mutate(sense1 = gsub("_", "\\\\_", sense1), sense2 = gsub("_", "\\\\_", sense1)),
+    col.names = c("Feature", "Sense 1 ($S_1$)", "Sense 2 ($S_2$)", "$\\hat{O}$", "$\\hat{O}_{S_1}$", "$\\hat{O}_{S_2}$"),
+    digits = 3,
+    booktabs = TRUE,
+    format = "latex",
+    escape = FALSE,
+    linesep = "",
+    caption = "Pairwise KDE overlap coefficients between sense distributions for each feature. 
+    $\\hat{O}$ denotes the raw shared area under the minimum of two KDE curves; 
+    $\\hat{O}_{s1}$ and $\\hat{O}_{s2}$ denote the fraction of sense 1 and sense 2's 
+    distribution respectively that overlaps with the other, where values approaching 1 
+    indicate near-complete distributional overlap.\\label{tab:overlap}"
+  ) %>%
+  kable_styling(latex_options = "HOLD_position", font_size = 8) %>%
+  landscape()
+```
+
+```{r}
+kable(
+  conf_mat,
+  booktabs = TRUE,
+  format = "latex",
+  linesep = "",
+  caption = "Confusion Matrix.\\label{tab:cm}"
+) %>%
+  kable_styling(latex_options = "HOLD_position", font_size = 8) %>%
+  landscape()
+```
+

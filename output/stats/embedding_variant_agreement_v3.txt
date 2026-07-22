@@ -1,0 +1,13 @@
+Pairwise agreement between embedding-layer variants
+last = raw last hidden layer; second_to_last = second-to-last hidden layer; avg_last4 = average of the last four hidden layers
+======================================================================
+
+Cohen's kappa (nearest-centroid sense classification agreement):
+  last vs second_to_last	0.9343
+  last vs avg_last4	0.9289
+  second_to_last vs avg_last4	0.9484
+
+Spearman rho (centroid-overlap fraction agreement):
+  last vs second_to_last	0.9650
+  last vs avg_last4	0.9720
+  second_to_last vs avg_last4	0.9720
