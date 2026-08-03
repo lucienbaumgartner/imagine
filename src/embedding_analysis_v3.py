@@ -651,3 +651,60 @@ with open("../output/stats/embedding_variant_agreement_v3.txt", "w") as f:
         f.write(f"  {pair}\t{rho:.4f}\n")
 
 print("Embedding-variant agreement saved to ../output/stats/embedding_variant_agreement_v3.txt")
+
+# Extend the layer-sensitivity check to "Geometric overlap" (1D/2D PCA + KDE overlap) above.
+# That method has no per-token classification step (it only ever reports overlap fractions
+# between pairs of KDE-estimated densities), so there is no natural categorical output to
+# compare with Cohen's kappa here -- only Spearman's rho on the overlap-fraction vectors,
+# computed separately for 1D and 2D since the report presents both.
+geometric_rho_records = []
+
+for n_dim in dims_to_run:
+    variant_geo_overlap = {}
+    for variant, col in EMBEDDING_VARIANT_COLUMNS.items():
+        emb_matrix_v = np.stack(imagine_df[col].values)
+        pca = PCA(n_components=n_dim)
+        emb_reduced_v = pca.fit_transform(emb_matrix_v)
+        dim_cols_v = [f"dim{i+1}" for i in range(n_dim)]
+        emb_df_v = pd.DataFrame(emb_reduced_v, columns=dim_cols_v)
+        emb_df_v['sense'] = imagine_df['sense'].values
+
+        if n_dim == 1:
+            xs_geo = np.linspace(emb_df_v['dim1'].min(), emb_df_v['dim1'].max(), 200)
+        else:
+            x_min, x_max = emb_df_v['dim1'].min(), emb_df_v['dim1'].max()
+            y_min, y_max = emb_df_v['dim2'].min(), emb_df_v['dim2'].max()
+            xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100), np.linspace(y_min, y_max, 100))
+            grid_points_v = np.vstack([xx.ravel(), yy.ravel()])
+
+        overlap_geo = {}
+        for sense1, sense2 in combinations(ALL_SENSES, 2):
+            data1 = emb_df_v[emb_df_v['sense'] == sense1][dim_cols_v].values.T
+            data2 = emb_df_v[emb_df_v['sense'] == sense2][dim_cols_v].values.T
+            kde1, kde2 = gaussian_kde(data1), gaussian_kde(data2)
+            if n_dim == 1:
+                density1, density2 = kde1(xs_geo), kde2(xs_geo)
+                min_density = np.minimum(density1, density2)
+                overlap_geo[f"{sense1} over {sense2}"] = np.trapezoid(min_density, xs_geo) / np.trapezoid(density1, xs_geo)
+                overlap_geo[f"{sense2} over {sense1}"] = np.trapezoid(min_density, xs_geo) / np.trapezoid(density2, xs_geo)
+            else:
+                density1 = kde1(grid_points_v).reshape(xx.shape)
+                density2 = kde2(grid_points_v).reshape(xx.shape)
+                min_density = np.minimum(density1, density2)
+                area = ((x_max - x_min) / (xx.shape[1] - 1)) * ((y_max - y_min) / (xx.shape[0] - 1))
+                overlap_geo[f"{sense1} over {sense2}"] = (np.sum(min_density) * area) / (np.sum(density1) * area)
+                overlap_geo[f"{sense2} over {sense1}"] = (np.sum(min_density) * area) / (np.sum(density2) * area)
+        variant_geo_overlap[variant] = overlap_geo
+
+    for v1, v2 in combinations(EMBEDDING_VARIANT_COLUMNS.keys(), 2):
+        common_pairs = sorted(set(variant_geo_overlap[v1]) & set(variant_geo_overlap[v2]))
+        x = [variant_geo_overlap[v1][p] for p in common_pairs]
+        y = [variant_geo_overlap[v2][p] for p in common_pairs]
+        rho, _ = spearmanr(x, y)
+        geometric_rho_records.append({"dimensionality": f"{n_dim}D", "pair": f"{v1} vs {v2}", "rho": rho})
+
+geometric_rho_df = pd.DataFrame(geometric_rho_records)
+geometric_rho_df.to_csv("../output/stats/embedding_variant_agreement_geometric_v3.txt", sep="\t", index=False)
+print("Pairwise Spearman rho (geometric-overlap fraction agreement):")
+print(geometric_rho_df)
+print("Geometric-overlap variant agreement saved to ../output/stats/embedding_variant_agreement_geometric_v3.txt")

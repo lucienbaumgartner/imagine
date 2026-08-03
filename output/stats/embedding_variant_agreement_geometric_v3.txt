@@ -1,0 +1,7 @@
+dimensionality	pair	rho
+1D	last vs second_to_last	0.9580419580419581
+1D	last vs avg_last4	0.9930069930069931
+1D	second_to_last vs avg_last4	0.965034965034965
+2D	last vs second_to_last	0.8741258741258742
+2D	last vs avg_last4	0.8671328671328673
+2D	second_to_last vs avg_last4	0.9930069930069931

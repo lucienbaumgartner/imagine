@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.7.20)  22 JUL 2026 14:38
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.7.20)  3 AUG 2026 15:13
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -643,173 +643,179 @@ LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 11
 (/Users/lb/Library/TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 130.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 129.
 (/Users/lb/Library/TinyTeX/texmf-dist/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 130.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 129.
 (/Users/lb/Library/TinyTeX/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 130.
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 129.
 (/Users/lb/Library/TinyTeX/texmf-dist/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 130.
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 129.
 (/Users/lb/Library/TinyTeX/texmf-dist/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 130.
+(Font)              <10> on input line 129.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 130.
+(Font)              <7> on input line 129.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 130.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 130.
+(Font)              <5> on input line 129.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 129.
 (/Users/lb/Library/TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 ) (/Users/lb/Library/TinyTeX/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 130.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 129.
 (/Users/lb/Library/TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) (/Users/lb/Library/TinyTeX/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
-)
-<imagine_report_v3_files/figure-latex/unnamed-chunk-3-1.pdf, id=8, 469.755pt x 180.675pt>
+) [1
+
+{/Users/lb/Library/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}]
+<imagine_report_v3_files/figure-latex/unnamed-chunk-3-1.pdf, id=20, 469.755pt x 180.675pt>
 File: imagine_report_v3_files/figure-latex/unnamed-chunk-3-1.pdf Graphic file (type pdf)
 <use imagine_report_v3_files/figure-latex/unnamed-chunk-3-1.pdf>
-Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-3-1.pdf  used on input line 164.
+Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-3-1.pdf  used on input line 166.
 (pdftex.def)             Requested size: 397.485pt x 152.87973pt.
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-<imagine_report_v3_files/figure-latex/unnamed-chunk-4-1.pdf, id=9, 469.755pt x 216.81pt>
+<imagine_report_v3_files/figure-latex/unnamed-chunk-4-1.pdf, id=21, 469.755pt x 216.81pt>
 File: imagine_report_v3_files/figure-latex/unnamed-chunk-4-1.pdf Graphic file (type pdf)
 <use imagine_report_v3_files/figure-latex/unnamed-chunk-4-1.pdf>
-Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-4-1.pdf  used on input line 173.
+Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-4-1.pdf  used on input line 175.
 (pdftex.def)             Requested size: 397.485pt x 183.45567pt.
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <12> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 181.
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 183.
 
-Overfull \hbox (25.57712pt too wide) in paragraph at lines 181--181
+Overfull \hbox (25.57712pt too wide) in paragraph at lines 183--183
 []\T1/lmr/bx/n/12 (-20) Why is in-ten-tion-al-ity so nar-rowly peaked for \T1/lmtt/b/n/12 "1-VIZUALIZE/PICTURE"\T1/lmr/bx/n/12 (-20) ? 
  []
 
 
-Overfull \hbox (15.20831pt too wide) in paragraph at lines 183--190
+Overfull \hbox (15.20831pt too wide) in paragraph at lines 185--192
 \T1/lmr/m/n/10 (-20) The in-ten-tion-al-ity panel of Fig-ure []1[] shows a markedly nar-rower peak for \T1/lmtt/m/n/10 "1-VIZUALIZE/PICTURE"
  []
 
-[1
-
-{/Users/lb/Library/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}] [2{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc} <./imagine_report_v3_files/figure-latex/unnamed-chunk-3-1.pdf> <./imagine_report_v3_files/figure-latex/unnamed-chunk-4-1.pdf>]
-Overfull \hbox (31.03369pt too wide) in paragraph at lines 233--243
+[2 <./imagine_report_v3_files/figure-latex/unnamed-chunk-3-1.pdf> <./imagine_report_v3_files/figure-latex/unnamed-chunk-4-1.pdf>]
+Overfull \hbox (31.03369pt too wide) in paragraph at lines 234--244
  [][] 
  []
 
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 277.
+[3{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}]
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 274.
 (/Users/lb/Library/TinyTeX/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [3{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}]
-<imagine_report_v3_files/figure-latex/unnamed-chunk-10-1.pdf, id=73, 469.755pt x 216.81pt>
-File: imagine_report_v3_files/figure-latex/unnamed-chunk-10-1.pdf Graphic file (type pdf)
-<use imagine_report_v3_files/figure-latex/unnamed-chunk-10-1.pdf>
-Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-10-1.pdf  used on input line 345.
-(pdftex.def)             Requested size: 397.485pt x 183.45567pt.
-<imagine_report_v3_files/figure-latex/unnamed-chunk-11-1.pdf, id=75, 469.755pt x 433.62pt>
+)
+<imagine_report_v3_files/figure-latex/unnamed-chunk-11-1.pdf, id=68, 469.755pt x 216.81pt>
 File: imagine_report_v3_files/figure-latex/unnamed-chunk-11-1.pdf Graphic file (type pdf)
 <use imagine_report_v3_files/figure-latex/unnamed-chunk-11-1.pdf>
-Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-11-1.pdf  used on input line 360.
+Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-11-1.pdf  used on input line 342.
+(pdftex.def)             Requested size: 397.485pt x 183.45567pt.
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[4{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}]
+<imagine_report_v3_files/figure-latex/unnamed-chunk-12-1.pdf, id=82, 469.755pt x 433.62pt>
+File: imagine_report_v3_files/figure-latex/unnamed-chunk-12-1.pdf Graphic file (type pdf)
+<use imagine_report_v3_files/figure-latex/unnamed-chunk-12-1.pdf>
+Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-12-1.pdf  used on input line 357.
 (pdftex.def)             Requested size: 397.485pt x 366.91138pt.
-[4 <./imagine_report_v3_files/figure-latex/unnamed-chunk-10-1.pdf>] [5 <./imagine_report_v3_files/figure-latex/unnamed-chunk-11-1.pdf>] [6] [7]
-Underfull \hbox (badness 4543) in paragraph at lines 566--584
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Underfull \hbox (badness 1609) in paragraph at lines 367--378
+\T1/lmr/m/n/10 (+20) hi-er-ar-chi-cal decomposition---first sep-a-rat-ing \T1/lmtt/m/n/10 "1-VIZUALIZE/PICTURE" \T1/lmr/m/n/10 (+20) from the rest,
+ []
+
+[5 <./imagine_report_v3_files/figure-latex/unnamed-chunk-11-1.pdf>] [6 <./imagine_report_v3_files/figure-latex/unnamed-chunk-12-1.pdf>] [7]
+Underfull \hbox (badness 4543) in paragraph at lines 563--582
 []\T1/lmr/m/n/10 (+20) The three-way in-ter-ac-tion changes al-most noth-ing (75.6% $\OMS/lmsy/m/n/10 !$ \T1/lmr/m/n/10 (+20) 75.7% ac-cu-racy;
  []
 
-<../../output/plots/overlap_density_v3.png, id=128, 578.16pt x 433.62pt>
+[8]
+<../../output/plots/overlap_density_v3.png, id=132, 578.16pt x 433.62pt>
 File: ../../output/plots/overlap_density_v3.png Graphic file (type png)
 <use ../../output/plots/overlap_density_v3.png>
 Package pdftex.def Info: ../../output/plots/overlap_density_v3.png  used on input line 623.
 (pdftex.def)             Requested size: 317.98921pt x 238.49173pt.
-[8]
-<imagine_report_v3_files/figure-latex/unnamed-chunk-23-1.pdf, id=137, 469.755pt x 325.215pt>
-File: imagine_report_v3_files/figure-latex/unnamed-chunk-23-1.pdf Graphic file (type pdf)
-<use imagine_report_v3_files/figure-latex/unnamed-chunk-23-1.pdf>
-Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-23-1.pdf  used on input line 630.
+<imagine_report_v3_files/figure-latex/unnamed-chunk-24-1.pdf, id=134, 469.755pt x 325.215pt>
+File: imagine_report_v3_files/figure-latex/unnamed-chunk-24-1.pdf Graphic file (type pdf)
+<use imagine_report_v3_files/figure-latex/unnamed-chunk-24-1.pdf>
+Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-24-1.pdf  used on input line 630.
 (pdftex.def)             Requested size: 238.49342pt x 165.10812pt.
-[9 <../../output/plots/overlap_density_v3.png> <./imagine_report_v3_files/figure-latex/unnamed-chunk-23-1.pdf>]
-<../../output/plots/kde1D_embeddings_overlap_v3.png, id=156, 578.16pt x 289.08pt>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[9 <../../output/plots/overlap_density_v3.png>]
+<../../output/plots/kde1D_embeddings_overlap_v3.png, id=149, 578.16pt x 289.08pt>
 File: ../../output/plots/kde1D_embeddings_overlap_v3.png Graphic file (type png)
 <use ../../output/plots/kde1D_embeddings_overlap_v3.png>
 Package pdftex.def Info: ../../output/plots/kde1D_embeddings_overlap_v3.png  used on input line 663.
 (pdftex.def)             Requested size: 238.49342pt x 119.24696pt.
-<../../output/plots/kde2D_embeddings_overlap_v3.png, id=157, 433.62pt x 433.62pt>
+<../../output/plots/kde2D_embeddings_overlap_v3.png, id=150, 433.62pt x 433.62pt>
 File: ../../output/plots/kde2D_embeddings_overlap_v3.png Graphic file (type png)
 <use ../../output/plots/kde2D_embeddings_overlap_v3.png>
 Package pdftex.def Info: ../../output/plots/kde2D_embeddings_overlap_v3.png  used on input line 669.
 (pdftex.def)             Requested size: 135.94067pt x 135.9426pt.
-<imagine_report_v3_files/figure-latex/unnamed-chunk-24-1.pdf, id=158, 469.755pt x 325.215pt>
-File: imagine_report_v3_files/figure-latex/unnamed-chunk-24-1.pdf Graphic file (type pdf)
-<use imagine_report_v3_files/figure-latex/unnamed-chunk-24-1.pdf>
-Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-24-1.pdf  used on input line 676.
-(pdftex.def)             Requested size: 238.49342pt x 165.10812pt.
-<imagine_report_v3_files/figure-latex/unnamed-chunk-25-1.pdf, id=159, 469.755pt x 325.215pt>
+<imagine_report_v3_files/figure-latex/unnamed-chunk-25-1.pdf, id=151, 469.755pt x 325.215pt>
 File: imagine_report_v3_files/figure-latex/unnamed-chunk-25-1.pdf Graphic file (type pdf)
 <use imagine_report_v3_files/figure-latex/unnamed-chunk-25-1.pdf>
-Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-25-1.pdf  used on input line 685.
+Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-25-1.pdf  used on input line 676.
 (pdftex.def)             Requested size: 238.49342pt x 165.10812pt.
-[10 <../../output/plots/kde1D_embeddings_overlap_v3.png> <../../output/plots/kde2D_embeddings_overlap_v3.png> <./imagine_report_v3_files/figure-latex/unnamed-chunk-24-1.pdf> <./imagine_report_v3_files/figure-latex/unnamed-chunk-25-1.pdf>]
-<../../output/plots/embedding_vs_sense_similarity_v3.png, id=182, 433.62pt x 289.08pt>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+<imagine_report_v3_files/figure-latex/unnamed-chunk-26-1.pdf, id=152, 469.755pt x 325.215pt>
+File: imagine_report_v3_files/figure-latex/unnamed-chunk-26-1.pdf Graphic file (type pdf)
+<use imagine_report_v3_files/figure-latex/unnamed-chunk-26-1.pdf>
+Package pdftex.def Info: imagine_report_v3_files/figure-latex/unnamed-chunk-26-1.pdf  used on input line 685.
+(pdftex.def)             Requested size: 238.49342pt x 165.10812pt.
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[10 <./imagine_report_v3_files/figure-latex/unnamed-chunk-24-1.pdf> <../../output/plots/kde1D_embeddings_overlap_v3.png> <../../output/plots/kde2D_embeddings_overlap_v3.png>]
+<../../output/plots/embedding_vs_sense_similarity_v3.png, id=170, 433.62pt x 289.08pt>
 File: ../../output/plots/embedding_vs_sense_similarity_v3.png Graphic file (type png)
 <use ../../output/plots/embedding_vs_sense_similarity_v3.png>
-Package pdftex.def Info: ../../output/plots/embedding_vs_sense_similarity_v3.png  used on input line 724.
+Package pdftex.def Info: ../../output/plots/embedding_vs_sense_similarity_v3.png  used on input line 725.
 (pdftex.def)             Requested size: 198.7425pt x 132.4976pt.
-[11{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc} <../../output/plots/embedding_vs_sense_similarity_v3.png>]
-<../../output/plots/embedding_projection_3D_v3.png, id=202, 578.16pt x 433.62pt>
+[11 <./imagine_report_v3_files/figure-latex/unnamed-chunk-25-1.pdf> <./imagine_report_v3_files/figure-latex/unnamed-chunk-26-1.pdf>] [12{/Users/lb/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc} <../../output/plots/embedding_vs_sense_similarity_v3.png>]
+<../../output/plots/embedding_projection_3D_v3.png, id=203, 578.16pt x 433.62pt>
 File: ../../output/plots/embedding_projection_3D_v3.png Graphic file (type png)
 <use ../../output/plots/embedding_projection_3D_v3.png>
 Package pdftex.def Info: ../../output/plots/embedding_projection_3D_v3.png  used on input line 822.
 (pdftex.def)             Requested size: 198.7425pt x 149.0565pt.
-[12]
-Underfull \hbox (badness 2503) in paragraph at lines 827--832
-[]\T1/lmr/m/n/10 (+20) Figure []12[] de-picts 2-dimensional KDE plots for all com-bi-na-tions of di-men-sions.
- []
-
-
-Underfull \hbox (badness 1331) in paragraph at lines 827--832
-\T1/lmtt/m/n/10 "1-VIZUALIZE/PICTURE" \T1/lmr/m/n/10 (+20) again stands out as a dis-tinct high-density re-gion (most
- []
-
-<../../output/plots/embedding_projection_intentionality_factivity_2D_core_v3.png, id=210, 433.62pt x 433.62pt>
+<../../output/plots/embedding_projection_intentionality_factivity_2D_core_v3.png, id=205, 433.62pt x 433.62pt>
 File: ../../output/plots/embedding_projection_intentionality_factivity_2D_core_v3.png Graphic file (type png)
 <use ../../output/plots/embedding_projection_intentionality_factivity_2D_core_v3.png>
-Package pdftex.def Info: ../../output/plots/embedding_projection_intentionality_factivity_2D_core_v3.png  used on input line 839.
+Package pdftex.def Info: ../../output/plots/embedding_projection_intentionality_factivity_2D_core_v3.png  used on input line 838.
 (pdftex.def)             Requested size: 119.2467pt x 119.24255pt.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <9> on input line 840.
+(Font)              <9> on input line 839.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 840.
-<../../output/plots/embedding_projection_intentionality_pictoriality_2D_core_v3.png, id=211, 433.62pt x 433.62pt>
+(Font)              <6> on input line 839.
+<../../output/plots/embedding_projection_intentionality_pictoriality_2D_core_v3.png, id=206, 433.62pt x 433.62pt>
 File: ../../output/plots/embedding_projection_intentionality_pictoriality_2D_core_v3.png Graphic file (type png)
 <use ../../output/plots/embedding_projection_intentionality_pictoriality_2D_core_v3.png>
-Package pdftex.def Info: ../../output/plots/embedding_projection_intentionality_pictoriality_2D_core_v3.png  used on input line 845.
+Package pdftex.def Info: ../../output/plots/embedding_projection_intentionality_pictoriality_2D_core_v3.png  used on input line 844.
 (pdftex.def)             Requested size: 119.2467pt x 119.24255pt.
-<../../output/plots/embedding_projection_factivity_pictoriality_2D_core_v3.png, id=212, 433.62pt x 433.62pt>
+<../../output/plots/embedding_projection_factivity_pictoriality_2D_core_v3.png, id=207, 433.62pt x 433.62pt>
 File: ../../output/plots/embedding_projection_factivity_pictoriality_2D_core_v3.png Graphic file (type png)
 <use ../../output/plots/embedding_projection_factivity_pictoriality_2D_core_v3.png>
-Package pdftex.def Info: ../../output/plots/embedding_projection_factivity_pictoriality_2D_core_v3.png  used on input line 851.
+Package pdftex.def Info: ../../output/plots/embedding_projection_factivity_pictoriality_2D_core_v3.png  used on input line 850.
 (pdftex.def)             Requested size: 119.2467pt x 119.24255pt.
-[13 <../../output/plots/embedding_projection_3D_v3.png> <../../output/plots/embedding_projection_intentionality_factivity_2D_core_v3.png> <../../output/plots/embedding_projection_intentionality_pictoriality_2D_core_v3.png> <../../output/plots/embedding_projection_factivity_pictoriality_2D_core_v3.png>] [14]
+[13 <../../output/plots/embedding_projection_3D_v3.png>] [14 <../../output/plots/embedding_projection_intentionality_factivity_2D_core_v3.png> <../../output/plots/embedding_projection_intentionality_pictoriality_2D_core_v3.png> <../../output/plots/embedding_projection_factivity_pictoriality_2D_core_v3.png>] [15] [16]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 915.
-[15
+(Font)              <8> on input line 948.
+[17
 
-] [16
+] [18
 
 
 ]
@@ -824,18 +830,18 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 17702 strings out of 469115
- 291143 string characters out of 5458670
- 747528 words of memory out of 5000000
- 46155 multiletter control sequences out of 15000+600000
- 718982 words of font info for 196 fonts, out of 8000000 for 9000
+ 17703 strings out of 469115
+ 291175 string characters out of 5458670
+ 745878 words of memory out of 5000000
+ 46157 multiletter control sequences out of 15000+600000
+ 718816 words of font info for 194 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
  83i,12n,93p,1014b,687s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi6.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi9.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmib10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmib7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr5.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on imagine_report_v3.pdf (16 pages, 3879699 bytes).
+Output written on imagine_report_v3.pdf (18 pages, 3880772 bytes).
 PDF statistics:
- 415 PDF objects out of 1000 (max. 8388607)
- 309 compressed objects within 4 object streams
- 56 named destinations out of 1000 (max. 500000)
+ 423 PDF objects out of 1000 (max. 8388607)
+ 315 compressed objects within 4 object streams
+ 59 named destinations out of 1000 (max. 500000)
  51388 words of extra memory for PDF output out of 51595 (max. 10000000)
 

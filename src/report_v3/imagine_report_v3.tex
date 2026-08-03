@@ -120,14 +120,13 @@ either feature variable or a non-NA value in \texttt{\$Exclusions} (from
 the sense annotation data) were removed. Of the 38 remaining cases where
 NCH and AH's sense annotations disagreed, 38 were settled via majority
 vote using a third coder (referee) who separately annotated exactly
-these disagreement cases; the 0 cases where all three coders disagreed
-have no majority and were marked unclassifiable. This leaves 906
-observations. Further, rows with sense values
-\texttt{"?-UNCLASSIFIABLE"}, \texttt{"5-EXCLAMATIVE"}, or
-\texttt{"O-Other"} (not occurring) were dropped due to low occurrence
-(see Table \ref{tab:senseCounts}), which makes estimation unstable. The
-final dataset consists of 893 observations. Lastly, the three feature
-dimensions were \(z\)-scaled for comparability.
+these disagreement cases; there were 0 cases where all three coders
+disagreed have no majority. This leaves 906 observations. Further, rows
+with sense values \texttt{"?-UNCLASSIFIABLE"}, \texttt{"5-EXCLAMATIVE"},
+or \texttt{"O-Other"} (not occurring) were dropped due to low occurrence
+(see Table \ref{tab:senseCounts}), which would make estimation unstable.
+The final dataset consists of 893 observations. Lastly, the three
+feature dimensions were \(z\)-scaled for comparability.
 
 \begin{table}[H]
 \centering
@@ -137,6 +136,7 @@ dimensions were \(z\)-scaled for comparability.
 \toprule
 Sense & N\\
 \midrule
+O-Other & 0\\
 ?-UNCLASSIFIABLE & 5\\
 1-VIZUALIZE/PICTURE & 518\\
 2-THINK/BELIVE & 224\\
@@ -146,6 +146,8 @@ Sense & N\\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\pagebreak
 
 \section{Descriptive Statistics}\label{descriptive-statistics}
 
@@ -211,16 +213,15 @@ that together cover the full corpus:
 \texttt{raw\_feature\_scores\_pt1.xlsx} (tokens no. 1--100, scored by
 three coders, N, D, and E) and \texttt{raw\_feature\_scores\_pt2.xlsx}
 (tokens no. 101--1000, scored by two coders, D and N, plus a precomputed
-mean). Raw coder-level records were available for 893 of the 893
-observations (0 missing, 0\%). Table \ref{tab:coderAgreement} compares
-the D and N coders, who scored every token in both batches (the third
-coder E, present only for tokens no. 1--100, is not included in this
-comparison); it shows that both coders \emph{individually} already rate
+mean). Table \ref{tab:coderAgreement} compares the D and N coders, who
+scored every token in both batches (the third coder E, present only for
+tokens no. 1--100, is not included in this comparison); it shows that
+both coders \emph{individually} already rate
 \texttt{"1-VIZUALIZE/PICTURE"} tokens with low variance on
-intentionality (SD \(\approx\) 0.3--0.65) and close to the scale ceiling
+intentionality (SD \(\approx\) 0.3--0.7) and close to the scale ceiling
 (mean \(\approx\) 6 out of 7), whereas their variance for the other
-senses is far higher (SD \(\approx\) 1.3--2.0). Mean absolute
-disagreement between coders is also the same size or smaller for
+senses is far higher (SD \(\approx\) 1.4--2). Mean absolute disagreement
+between coders is also the same size or smaller for
 \texttt{"1-VIZUALIZE/PICTURE"} than for the other senses. In other
 words, the narrow peak is not a symptom of coders disagreeing and
 averaging out to a bland middle value -- each coder already converges on
@@ -228,7 +229,7 @@ a high intentionality score for this sense.
 
 \begin{table}[H]
 \centering
-\caption{\label{tab:unnamed-chunk-6}Per-coder intentionality agreement by sense (raw 1--7 scale). D and N denote the two coders.\label{tab:coderAgreement}}
+\caption{\label{tab:unnamed-chunk-7}Per-coder intentionality agreement by sense (raw 1--7 scale). D and N denote the two coders.\label{tab:coderAgreement}}
 \centering
 \begin{tabular}[t]{lrrrrrrr}
 \toprule
@@ -247,15 +248,11 @@ The coder correlation \(r_{D,N}\) is nonetheless the weakest for
 disagreement. This is consistent with a restriction-of-range effect:
 once most ratings are compressed near the top of the scale, there is
 little residual variance left for the two coders' scores to correlate
-over, even though they remain close in absolute terms.
+over, even though they remain close in absolute terms. Taken together,
+the pattern looks like a genuine ceiling effect rather than a data or
+annotation artifact.
 
-Taken together, the pattern looks like a genuine ceiling effect rather
-than a data or annotation artifact: \texttt{"1-VIZUALIZE/PICTURE"}
-denotes deliberately forming a mental image, which by definition is an
-intentional act, so both coders independently push intentionality
-ratings toward the top of the scale for this sense. Factivity and
-pictoriality carry no such definitional constraint and show no
-equivalent narrowing.
+\pagebreak
 
 \section{Predictive Modeling of Sense
 Membership}\label{predictive-modeling-of-sense-membership}
@@ -292,7 +289,7 @@ however. Table \ref{tab:senseAccuracy} details accuracy per sense:
 
 \begin{table}[H]
 \centering
-\caption{\label{tab:unnamed-chunk-8}Posterior probability concentration and classification accuracy by sense. $\tilde{p}_{\max}$ denotes the median maximum predicted probability across observations; $\text{IQR}(\hat{p}_{\max})$ denotes the interquartile range of maximum predicted probabilities.\label{tab:senseAccuracy}}
+\caption{\label{tab:unnamed-chunk-9}Posterior probability concentration and classification accuracy by sense. $\tilde{p}_{\max}$ denotes the median maximum predicted probability across observations; $\text{IQR}(\hat{p}_{\max})$ denotes the interquartile range of maximum predicted probabilities.\label{tab:senseAccuracy}}
 \centering
 \begin{tabular}[t]{lrrr}
 \toprule
@@ -313,7 +310,7 @@ details the the confusion matrix by sense.
 
 \begin{table}[H]
 \centering
-\caption{\label{tab:unnamed-chunk-9}Confusion Matrix.\label{tab:cmDetail}}
+\caption{\label{tab:unnamed-chunk-10}Confusion Matrix.\label{tab:cmDetail}}
 \centering
 \begin{tabular}[t]{lrrr}
 \toprule
@@ -342,11 +339,11 @@ estimates for \texttt{"3-SUPPOSE/ASSUME"} and
 
 \begin{figure}[h]
 
-{\centering \includegraphics[width=1\linewidth]{imagine_report_v3_files/figure-latex/unnamed-chunk-10-1} 
+{\centering \includegraphics[width=1\linewidth]{imagine_report_v3_files/figure-latex/unnamed-chunk-11-1} 
 
 }
 
-\caption{Bootstrapped Coefficients (n = 500) with 95\% CI.\label{fig:bootstrapping}}\label{fig:unnamed-chunk-10}
+\caption{Bootstrapped Coefficients (n = 500) with 95\% CI.\label{fig:bootstrapping}}\label{fig:unnamed-chunk-11}
 \end{figure}
 
 Predicted probabilities based on the optimal model were generated across
@@ -357,11 +354,11 @@ facilitate interpretation of interaction patterns.
 
 \begin{figure}[h]
 
-{\centering \includegraphics[width=1\linewidth]{imagine_report_v3_files/figure-latex/unnamed-chunk-11-1} 
+{\centering \includegraphics[width=1\linewidth]{imagine_report_v3_files/figure-latex/unnamed-chunk-12-1} 
 
 }
 
-\caption{redicted sense probability based on GLM with ridge regularization for 2-way interactions. The third dimension is held constant at the median value.\label{fig:Xeffects}}\label{fig:unnamed-chunk-11}
+\caption{Predicted sense probability based on GLM with ridge regularization for 2-way interactions. The third dimension is held constant at the median value.\label{fig:Xeffects}}\label{fig:unnamed-chunk-12}
 \end{figure}
 
 \subsection{Robustness check: hierarchical (nested)
@@ -369,9 +366,9 @@ classification}\label{robustness-check-hierarchical-nested-classification}
 
 Given how uneven performance is across senses (Table
 \ref{tab:senseAccuracy}), we checked whether a hierarchical
-decomposition -- first separating \texttt{"1-VIZUALIZE/PICTURE"} from
-the rest, then \texttt{"2-THINK/BELIVE"} from the remainder, and finally
-\texttt{"3-SUPPOSE/ASSUME"} from \texttt{"4-FALSE\_PERCEPTION"} -- could
+decomposition---first separating \texttt{"1-VIZUALIZE/PICTURE"} from the
+rest, then \texttt{"2-THINK/BELIVE"} from the remainder, and finally
+\texttt{"3-SUPPOSE/ASSUME"} from \texttt{"4-FALSE\_PERCEPTION"}---could
 better exploit whatever local structure exists among the
 harder-to-classify senses. Each split was fit as a ridge (L2)
 regularized logistic regression on the same three annotation dimensions
@@ -380,14 +377,14 @@ cross-validation. This is a robustness check on the modeling strategy,
 not a replacement for the multinomial model reported above.
 
 Table \ref{tab:nodeAccuracy} shows that, evaluated in isolation on only
-the observations relevant to it, each split separates reasonably well --
+the observations relevant to it, each split separates reasonably well,
 including the \texttt{"3-SUPPOSE/ASSUME"}
 vs.~\texttt{"4-FALSE\_PERCEPTION"} split, which reaches 83.4\% accuracy
 on its own.
 
 \begin{table}[H]
 \centering
-\caption{\label{tab:unnamed-chunk-13}Node-local accuracy of each split in the hierarchical cascade, evaluated on the subset of observations relevant to that split.\label{tab:nodeAccuracy}}
+\caption{\label{tab:unnamed-chunk-14}Node-local accuracy of each split in the hierarchical cascade, evaluated on the subset of observations relevant to that split.\label{tab:nodeAccuracy}}
 \centering
 \begin{tabular}[t]{lrr}
 \toprule
@@ -400,16 +397,16 @@ C: 3-SUPPOSE/ASSUME vs. 4-FALSE\_PERCEPTION & 151 & 0.834\\
 \end{tabular}
 \end{table}
 
-Chaining the splits into a single cascade -- as the model would actually
-be used -- tells a different story, however. Overall accuracy is 74.7\%,
-effectively unchanged from the flat multinomial model's 75.6\% (Table
-\ref{tab:hierAccuracy}). \texttt{"3-SUPPOSE/ASSUME"} is still never
-recovered (0\% recall), and \texttt{"4-FALSE\_PERCEPTION"} improves only
-modestly (25.4\% recall, up from 11.9\% in the flat model).
+Chaining the splits into a single cascade---as the model would actually
+be used---tells a different story, however. Overall accuracy is 74.7\%,
+effectively unchanged from the flat multinomial model's 75.6\%.
+\texttt{"3-SUPPOSE/ASSUME"} is still never recovered (0\% recall), and
+\texttt{"4-FALSE\_PERCEPTION"} improves only modestly (25.4\% recall, up
+from 11.9\% in the flat model).
 
 \begin{table}[H]
 \centering
-\caption{\label{tab:unnamed-chunk-14}Hierarchical model: precision, recall, and F1 by sense.\label{tab:hierAccuracy}}
+\caption{\label{tab:unnamed-chunk-15}Hierarchical model: precision, recall, and F1 by sense.\label{tab:hierAccuracy}}
 \centering
 \begin{tabular}[t]{lrrr}
 \toprule
@@ -446,47 +443,47 @@ models}\label{robustness-check-coder-reliability-weighted-models}
 The three annotation dimensions are themselves aggregates over multiple
 coders, and the coder-agreement analysis above (Table
 \ref{tab:coderAgreement}) showed that agreement varies considerably by
-sense and dimension. We checked whether accounting for this --
-downweighting rows and dimensions where coders disagreed more -- changes
+sense and dimension. We checked whether accounting for this, e.g.~by
+downweighting rows and dimensions where coders disagreed more, changes
 the model's ability to recover \texttt{"3-SUPPOSE/ASSUME"} and
 \texttt{"4-FALSE\_PERCEPTION"}. For each observation and each dimension
 we computed the standard deviation across that row's available raw coder
 scores (three coders, N/D/E, for tokens no. 1--100; two coders, D/N, for
-tokens no. 101--1000 -- SD is well-defined for either count, so no
+tokens no. 101--1000; SD is well-defined for either count, so no
 special-casing is needed). Reliability was then defined as
 \(w = 1 / (1 + \text{SD})\), so perfectly agreeing coders yield \(w=1\)
 and reliability decays as disagreement grows. Because \texttt{glmnet}
 only accepts a single weight per observation, not one per feature per
 observation, we tried three different ways of injecting this row- and
-dimension-specific reliability into the same ridge multinomial model
-used above, none of which replace it.
+feature-specific reliability into the same ridge multinomial model used
+above, none of which replace it.
 
-The 0, 1, and 23 rows with fewer than two usable raw scores for
-intentionality, factivity, and pictoriality respectively were imputed
-with that dimension's corpus median SD, a neutral ``typical
-reliability'' placeholder, before computing the weights below.
+The rows with fewer than two usable raw scores for intentionality (0),
+factivity (1), and pictoriality (23) respectively were imputed with that
+dimension's corpus median SD, a neutral ``typical reliability''
+placeholder, before computing the weights below.
 
 \textbf{Variant 1 -- attenuate the feature values.} For each row and
-dimension we multiply the \(z\)-scored value by that row's own
-reliability weight for that dimension \emph{before} forming the main
-effects and interactions, so noisier per-row measurements are shrunk
-toward zero and contribute less to the fit -- preserving the row- and
-dimension-specific granularity, at the cost of changing the actual
-feature values the model sees rather than just their loss weight.
+feature we multiply the \(z\)-scored value by that row's own reliability
+weight for that dimension \emph{before} forming the main effects and
+interactions, so noisier per-row measurements are shrunk toward zero and
+contribute less to the fit. This preserves the row- and feature-specific
+granularity, at the cost of changing the actual feature values the model
+sees rather than just their loss weight.
 
 \textbf{Variant 2 -- a single per-row weight.} We collapse the three
-dimension-specific reliabilities into one weight per row (their average)
+feature-specific reliabilities into one weight per row (their average)
 and pass it to \texttt{glmnet}'s native \texttt{weights} argument,
 leaving the feature values themselves untouched. This is the more
 standard ``weighted regression'' reading, at the cost of no longer
-distinguishing a row that is reliable on one dimension but noisy on
+distinguishing a row that is reliable on one feature but noisy on
 another.
 
 \textbf{Variant 3 -- a corpus-wide penalty per dimension.} Instead of a
 row-level adjustment, we compute one reliability score per dimension
 across the whole corpus (its mean SD) and translate that into
 \texttt{glmnet}`s \texttt{penalty.factor}, so that a systematically
-noisier dimension is shrunk more by the ridge penalty; an interaction
+noisier feature is shrunk more by the ridge penalty; an interaction
 term's penalty is the product of its two parent dimensions' penalties.
 This ignores row-to-row variation entirely, but is the reading closest
 to ``weight the feature dimensions'' taken literally.
@@ -497,7 +494,7 @@ variants.
 
 \begin{table}[H]
 \centering
-\caption{\label{tab:unnamed-chunk-19}Overall accuracy and per-sense recall: unweighted model vs. three coder-reliability weighted variants. Recall 1--4 refer to \texttt{1-VIZUALIZE/PICTURE}, \texttt{2-THINK/BELIVE}, \texttt{3-SUPPOSE/ASSUME}, and \texttt{4-FALSE\_PERCEPTION} respectively.\label{tab:weightedComparison}}
+\caption{\label{tab:unnamed-chunk-20}Overall accuracy and per-sense recall: unweighted model vs. three coder-reliability weighted variants. Recall 1--4 refer to \texttt{1-VIZUALIZE/PICTURE}, \texttt{2-THINK/BELIVE}, \texttt{3-SUPPOSE/ASSUME}, and \texttt{4-FALSE\_PERCEPTION} respectively.\label{tab:weightedComparison}}
 \centering
 \fontsize{9}{11}\selectfont
 \begin{tabular}[t]{lrrrrr}
@@ -521,8 +518,8 @@ variants. This is a second, independent robustness check pointing to the
 same conclusion as the hierarchical model above: the difficulty in
 recovering \texttt{"3-SUPPOSE/ASSUME"} and
 \texttt{"4-FALSE\_PERCEPTION"} is not an artifact of noisy per-row
-annotation that reliability weighting could correct for -- it reflects a
-genuine lack of separating signal between these senses and
+annotation that reliability weighting could correct for; rather, it
+reflects a genuine lack of separating signal between these senses and
 \texttt{"1-VIZUALIZE/PICTURE"}/\texttt{"2-THINK/BELIVE"} in the three
 annotation dimensions themselves.
 
@@ -531,16 +528,16 @@ ceiling}\label{robustness-check-interaction-order-and-a-nonparametric-ceiling}
 
 The model above assumes a specific functional form: main effects plus
 all pairwise interactions between the three annotation dimensions. We
-checked whether that assumption, rather than the dimensions themselves,
-is limiting recovery of \texttt{"3-SUPPOSE/ASSUME"} and
+checked whether that assumption, rather than the feature dimensions
+themselves, is limiting recovery of \texttt{"3-SUPPOSE/ASSUME"} and
 \texttt{"4-FALSE\_PERCEPTION"}, in two ways. First, since there are only
 three predictors, extending the ridge model to include the full
 three-way interaction costs a single extra column and is essentially
 free to try. Second, and more informatively, we fit a fully
 nonparametric random forest on the same three raw features with no
 manually specified interaction terms at all, as an upper bound on what
-\emph{any} function of these three features -- linear, polynomial, or
-otherwise -- could achieve.
+\emph{any} function of these three features (linear, polynomial, or
+otherwise) could achieve.
 
 Table \ref{tab:interactionComparison} compares the baseline two-way
 model, the three-way interaction, and the random forest (both in-sample
@@ -548,7 +545,7 @@ and OOB) on overall accuracy and per-sense recall.
 
 \begin{table}[H]
 \centering
-\caption{\label{tab:unnamed-chunk-22}Overall accuracy and per-sense recall: baseline two-way model vs. three-way interaction and random forest. Recall 1--4 refer to \texttt{1-VIZUALIZE/PICTURE}, \texttt{2-THINK/BELIVE}, \texttt{3-SUPPOSE/ASSUME}, and \texttt{4-FALSE\_PERCEPTION} respectively.\label{tab:interactionComparison}}
+\caption{\label{tab:unnamed-chunk-23}Overall accuracy and per-sense recall: baseline two-way model vs. three-way interaction and random forest. Recall 1--4 refer to \texttt{1-VIZUALIZE/PICTURE}, \texttt{2-THINK/BELIVE}, \texttt{3-SUPPOSE/ASSUME}, and \texttt{4-FALSE\_PERCEPTION} respectively.\label{tab:interactionComparison}}
 \centering
 \fontsize{9}{11}\selectfont
 \begin{tabular}[t]{lrrrrr}
@@ -567,20 +564,23 @@ The three-way interaction changes almost nothing (75.6\% \(\to\) 75.7\%
 accuracy; \texttt{"3-SUPPOSE/ASSUME"} recall stays at 0), so interaction
 order beyond pairwise terms is not the bottleneck. The random forest
 tells a more mixed story. Its in-sample accuracy (80.7\%) is inflated by
-overfitting -- unsurprising given how flexible the model is relative to
-the sample size, especially for the smaller senses -- but the honest,
-OOB accuracy (74.7\%) is close to the baseline overall. Sense-by-sense,
-though, OOB recall for \texttt{"4-FALSE\_PERCEPTION"} rises to 25.4\%,
-roughly double the baseline's 11.9\%, while \texttt{"3-SUPPOSE/ASSUME"}
-remains essentially unrecoverable at 4.3\% even under a fully flexible
-model. This suggests the linear/fixed-interaction-order assumption of
-the ridge multinomial genuinely was somewhat limiting for
-\texttt{"4-FALSE\_PERCEPTION"} specifically -- a nonlinear or
-non-additive combination of the three dimensions carries some real, if
-modest, signal for that sense -- whereas \texttt{"3-SUPPOSE/ASSUME"}
-still shows no recoverable signal even when the model is allowed to be
-maximally flexible, reinforcing the conclusion from the two robustness
-checks above for that sense specifically.
+overfitting, which is unsurprising given how flexible the model is
+relative to the sample size, especially for the smaller senses. The
+honest, OOB accuracy (74.7\%) is close to the baseline overall.
+Sense-by-sense, though, OOB recall for \texttt{"4-FALSE\_PERCEPTION"}
+rises to 25.4\%, roughly double the baseline's 11.9\%, while
+\texttt{"3-SUPPOSE/ASSUME"} remains essentially unrecoverable at 4.3\%
+even under a fully flexible model. This suggests the
+linear/fixed-interaction-order assumption of the ridge multinomial
+genuinely was somewhat limiting for \texttt{"4-FALSE\_PERCEPTION"}
+specifically. In comparison, a nonlinear or non-additive combination of
+the three dimensions carries some real, if modest, signal for that
+sense. Albeit, \texttt{"3-SUPPOSE/ASSUME"} still shows no recoverable
+signal even when the model is allowed to be maximally flexible,
+reinforcing the conclusion from the two robustness checks above for that
+sense specifically.
+
+\pagebreak
 
 \section{Embedding analysis}\label{embedding-analysis}
 
@@ -627,11 +627,11 @@ other sense-centroids. The overlap fractions are detailed in Figure
 
 \begin{figure}[h]
 
-{\centering \includegraphics[width=0.6\linewidth]{imagine_report_v3_files/figure-latex/unnamed-chunk-23-1} 
+{\centering \includegraphics[width=0.6\linewidth]{imagine_report_v3_files/figure-latex/unnamed-chunk-24-1} 
 
 }
 
-\caption{Centroid-based overlap fractions.\label{fig:centroidOverlapHeatmap}}\label{fig:unnamed-chunk-23}
+\caption{Centroid-based overlap fractions.\label{fig:centroidOverlapHeatmap}}\label{fig:unnamed-chunk-24}
 \end{figure}
 
 \subsection{Geometric overlap}\label{geometric-overlap}
@@ -673,20 +673,20 @@ respectively.
 
 \begin{figure}[h]
 
-{\centering \includegraphics[width=0.6\linewidth]{imagine_report_v3_files/figure-latex/unnamed-chunk-24-1} 
-
-}
-
-\caption{1D KDE overlap fractions.\label{fig:kde1dHeatmap}}\label{fig:unnamed-chunk-24}
-\end{figure}
-
-\begin{figure}[h]
-
 {\centering \includegraphics[width=0.6\linewidth]{imagine_report_v3_files/figure-latex/unnamed-chunk-25-1} 
 
 }
 
-\caption{2D KDE overlap fractions.\label{fig:kde2dHeatmap}}\label{fig:unnamed-chunk-25}
+\caption{1D KDE overlap fractions.\label{fig:kde1dHeatmap}}\label{fig:unnamed-chunk-25}
+\end{figure}
+
+\begin{figure}[h]
+
+{\centering \includegraphics[width=0.6\linewidth]{imagine_report_v3_files/figure-latex/unnamed-chunk-26-1} 
+
+}
+
+\caption{2D KDE overlap fractions.\label{fig:kde2dHeatmap}}\label{fig:unnamed-chunk-26}
 \end{figure}
 
 \subsection{Embedding similarity vs sense
@@ -707,7 +707,8 @@ degree to which semantic closeness in embedding space aligns with sense
 membership, providing a global measure of clustering in the latent
 space. Unlike centroid-based or geometric overlap, this is a global,
 distribution-agnostic summary statistic: it does not explicitly consider
-clusters or shapes, only relative similarity between pairs of sentences.
+clusters or shapes, only relative similarity between pairs of token
+embeddings.
 
 Figure \ref{fig:matrixComparison} shows the distribution of pairwise
 cosine similarities between sentence embeddings, separated by whether
@@ -731,19 +732,19 @@ projection}\label{senses-under-embedding-projection}
 
 To examine how sentence embeddings capture the annotated senses along
 the three feature dimensions, we trained ridge-regularized regression
-models predicting each z-scaled dimension from the sentence embeddings.
-The regression coefficients define a direction in embedding space along
-which the dimension increases. By projecting each sentence embedding
-onto these directions, we obtain an embedding-based estimate for that
-dimension. This procedure was repeated for all three dimensions,
-resulting in a 3D projection of each sentence in the space spanned by
-the semantic dimensions.
+models predicting each \(z\)-scaled dimension from the sentence
+embeddings. The regression coefficients define a direction in embedding
+space along which the dimension increases. By projecting each sentence
+embedding onto these directions, we obtain an embedding-based estimate
+for that dimension. This procedure was repeated for all three
+dimensions, resulting in a 3D projection of each sentence in the space
+spanned by the semantic dimensions.
 
 Here is a more detailed rundown of the analysis: Let
 \(\mathbf{X} \in \mathbb{R}^{n \times d}\) denote the matrix of sentence
 embeddings, where \(n\) is the number of sentences and \(d = 768\) the
 embedding dimension. Let \(\mathbf{y}^{(k)} \in \mathbb{R}^n\) be the
-vector of z-scaled ratings for semantic dimension
+vector of \(z\)-scaled ratings for semantic dimension
 \(k \in \{\text{intentionality, factivity, pictoriality}\}\).
 
 We fit a ridge-regularized regression model for each dimension:
@@ -777,7 +778,7 @@ annotated semantic structure.
 
 \begin{table}[H]
 \centering
-\caption{\label{tab:unnamed-chunk-27}Ridge regression fit predicting each feature dimension from sentence embeddings: in-sample and 5-fold cross-validated $R^2$.\label{tab:projectionR2}}
+\caption{\label{tab:unnamed-chunk-28}Ridge regression fit predicting each feature dimension from sentence embeddings: in-sample and 5-fold cross-validated $R^2$.\label{tab:projectionR2}}
 \centering
 \begin{tabular}[t]{lrrrr}
 \toprule
@@ -791,12 +792,12 @@ Pictoriality & 100 & 0.697 & 0.495 & 0.082\\
 \end{table}
 
 Table \ref{tab:projectionR2} shows that the in-sample \(R^2\) is
-optimistic relative to the honest, cross-validated estimate, as expected
--- but the cross-validated \(R^2\) itself is far from zero: 0.73 for
-intentionality, 0.5 for pictoriality, and 0.44 for factivity. The
+optimistic relative to the honest, cross-validated estimate, as
+expected, but the cross-validated \(R^2\) itself is far from zero: 0.73
+for intentionality, 0.5 for pictoriality, and 0.44 for factivity. The
 embeddings therefore do carry substantial, generalizable information
-about these dimensions -- particularly intentionality -- contrary to
-what a purely visual read of the projection space might suggest.
+about these dimensions (particularly intentionality) contrary to what a
+purely visual read of the projection space might suggest.
 
 Figure \ref{fig:3Dprojection} shows the 3D projection of sentence
 embeddings onto the directions corresponding to the feature dimensions.
@@ -807,15 +808,14 @@ for this sense documented in Figure \ref{fig:distributions}.
 \texttt{"2-THINK/BELIVE"}, \texttt{"3-SUPPOSE/ASSUME"}, and
 \texttt{"4-FALSE\_PERCEPTION"}, however, remain thoroughly intermixed
 with each other in this space. This is not a sign that the embeddings
-fail to encode the feature dimensions -- the \(R^2\) values above show
-they do -- but rather that, once the dimensions are reconstructed from
-the embeddings, \texttt{"2-THINK/BELIVE"}, \texttt{"3-SUPPOSE/ASSUME"},
-and \texttt{"4-FALSE\_PERCEPTION"} occupy overlapping regions of that
-space, mirroring the same pattern documented throughout this report
-(Figure \ref{fig:distributions}, Table \ref{tab:overlap}, and the
-predictive modeling robustness checks): \texttt{"1-VIZUALIZE/PICTURE"}
-is comparatively well-defined, while the other three senses are not
-cleanly separated by these three dimensions, however they are estimated.
+fail to encode the feature dimensions (in fact, the \(R^2\) values above
+show they do) but rather that, once the dimensions are reconstructed
+from the embeddings, \texttt{"2-THINK/BELIVE"},
+\texttt{"3-SUPPOSE/ASSUME"}, and \texttt{"4-FALSE\_PERCEPTION"} occupy
+overlapping regions of that space, mirroring the same pattern documented
+throughout this report: \texttt{"1-VIZUALIZE/PICTURE"} is comparatively
+well-defined, while the other three senses are not cleanly separated by
+these three dimensions, however they are estimated.
 
 \begin{figure}
     \centering
@@ -824,11 +824,10 @@ cleanly separated by these three dimensions, however they are estimated.
     \label{fig:3Dprojection}
 \end{figure}
 
-Figure \ref{fig:2Dprojection} depicts 2-dimensional KDE plots for all
-combinations of dimensions. \texttt{"1-VIZUALIZE/PICTURE"} again stands
-out as a distinct high-density region (most visibly against
-pictoriality), while the other three senses' contours overlap heavily
-throughout.
+Figure \ref{fig:2Dprojection} depicts 2D KDE plots for all combinations
+of dimensions. \texttt{"1-VIZUALIZE/PICTURE"} again stands out as a
+distinct high-density region (most visibly against pictoriality), while
+the other three senses' contours overlap heavily throughout.
 
 \begin{figure}
 \centering
@@ -859,7 +858,7 @@ choice}\label{robustness-check-sensitivity-to-embedding-layer-choice}
 Every analysis above uses the raw last hidden layer of BERT for each
 token's embedding. The very last layer is somewhat specialized toward
 BERT's masked-language-modeling pretraining objective, and
-middle-to-late layers -- or an average across the last several layers --
+middle-to-late layers (or an average across the last several layers)
 have been reported elsewhere to sometimes carry semantic content at
 least as well (e.g.~Ethayarajh 2019). We checked whether this choice
 matters by repeating the centroid-based analysis with two alternatives:
@@ -875,7 +874,7 @@ variants agree on which sense pairs overlap most and least).
 
 \begin{table}[H]
 \centering
-\caption{\label{tab:unnamed-chunk-28}Pairwise agreement between embedding-layer variants: nearest-centroid sense classification (Cohen's $\kappa$) and centroid-overlap fractions (Spearman $\rho$).\label{tab:variantAgreement}}
+\caption{\label{tab:unnamed-chunk-29}Pairwise agreement between embedding-layer variants: nearest-centroid sense classification (Cohen's $\kappa$) and centroid-overlap fractions (Spearman $\rho$).\label{tab:variantAgreement}}
 \centering
 \begin{tabular}[t]{lrr}
 \toprule
@@ -899,11 +898,45 @@ sense overlap reported throughout this section. The last-layer
 embeddings used above are therefore a reasonable, representative choice,
 not an idiosyncratic one that happens to drive the reported conclusions.
 
+We extended the same check to the ``Geometric overlap'' analysis above
+(the PCA-reduced, KDE-based overlap fractions), which goes through an
+additional dimensionality-reduction step centroid overlap does not and
+so could in principle respond differently to a change in layer. That
+method has no per-token classification step -- it only ever reports
+overlap fractions between pairs of KDE-estimated densities -- so there
+is no categorical output for Cohen's \(\kappa\) to compare here; we
+report Spearman's \(\rho\) on the overlap-fraction vectors alone,
+separately for the 1D and 2D reductions.
+
+\begin{table}[H]
+\centering
+\caption{\label{tab:unnamed-chunk-30}Pairwise agreement between embedding-layer variants on the 1D and 2D geometric (PCA + KDE) overlap fractions.\label{tab:geoVariantAgreement}}
+\centering
+\begin{tabular}[t]{lrr}
+\toprule
+Variant pair & 1D Spearman $\rho$ & 2D Spearman $\rho$\\
+\midrule
+last vs second to last & 0.958 & 0.874\\
+last vs avg last4 & 0.993 & 0.867\\
+second to last vs avg last4 & 0.965 & 0.993\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table \ref{tab:geoVariantAgreement} shows the same picture: Spearman's
+\(\rho\) ranges from 0.867 to 0.993 across both dimensionalities and all
+three variant pairs. The geometric-overlap conclusions in Figure
+\ref{fig:KDEsurface} are therefore just as robust to the choice of BERT
+layer as the centroid-based ones, despite the extra PCA step this method
+involves.
+
+\pagebreak
+
 \section{Appendix}\label{appendix}
 
 \begin{landscape}\begin{table}[H]
 \centering
-\caption{\label{tab:unnamed-chunk-29}Pairwise KDE overlap coefficients between sense distributions for each feature. 
+\caption{\label{tab:unnamed-chunk-31}Pairwise KDE overlap coefficients between sense distributions for each feature. 
     $\hat{O}$ denotes the raw shared area under the minimum of two KDE curves; 
     $\hat{O}_{s1}$ and $\hat{O}_{s2}$ denote the fraction of sense 1 and sense 2's 
     distribution respectively that overlaps with the other, where values approaching 1 
@@ -914,24 +947,24 @@ not an idiosyncratic one that happens to drive the reported conclusions.
 \toprule
 Feature & Sense 1 ($S_1$) & Sense 2 ($S_2$) & $\hat{O}$ & $\hat{O}_{S_1}$ & $\hat{O}_{S_2}$\\
 \midrule
-intentionality & 1-VIZUALIZE/PICTURE & 1-VIZUALIZE/PICTURE & 0.212 & 0.214 & 0.226\\
-intentionality & 1-VIZUALIZE/PICTURE & 1-VIZUALIZE/PICTURE & 0.307 & 0.309 & 0.343\\
-intentionality & 1-VIZUALIZE/PICTURE & 1-VIZUALIZE/PICTURE & 0.220 & 0.222 & 0.231\\
-intentionality & 2-THINK/BELIVE & 2-THINK/BELIVE & 0.675 & 0.742 & 0.820\\
-intentionality & 2-THINK/BELIVE & 2-THINK/BELIVE & 0.762 & 0.838 & 0.830\\
-intentionality & 3-SUPPOSE/ASSUME & 3-SUPPOSE/ASSUME & 0.655 & 0.796 & 0.714\\
-factivity & 1-VIZUALIZE/PICTURE & 1-VIZUALIZE/PICTURE & 0.584 & 0.614 & 0.610\\
-factivity & 1-VIZUALIZE/PICTURE & 1-VIZUALIZE/PICTURE & 0.608 & 0.633 & 0.631\\
-factivity & 1-VIZUALIZE/PICTURE & 1-VIZUALIZE/PICTURE & 0.738 & 0.775 & 0.766\\
-factivity & 2-THINK/BELIVE & 2-THINK/BELIVE & 0.936 & 0.960 & 0.972\\
-factivity & 2-THINK/BELIVE & 2-THINK/BELIVE & 0.389 & 0.406 & 0.404\\
-factivity & 3-SUPPOSE/ASSUME & 3-SUPPOSE/ASSUME & 0.409 & 0.424 & 0.422\\
-pictoriality & 1-VIZUALIZE/PICTURE & 1-VIZUALIZE/PICTURE & 0.560 & 0.601 & 0.582\\
-pictoriality & 1-VIZUALIZE/PICTURE & 1-VIZUALIZE/PICTURE & 0.483 & 0.519 & 0.523\\
-pictoriality & 1-VIZUALIZE/PICTURE & 1-VIZUALIZE/PICTURE & 0.670 & 0.719 & 0.749\\
-pictoriality & 2-THINK/BELIVE & 2-THINK/BELIVE & 0.771 & 0.808 & 0.834\\
-pictoriality & 2-THINK/BELIVE & 2-THINK/BELIVE & 0.742 & 0.777 & 0.853\\
-pictoriality & 3-SUPPOSE/ASSUME & 3-SUPPOSE/ASSUME & 0.662 & 0.717 & 0.761\\
+intentionality & 1-VIZUALIZE/PICTURE & 2-THINK/BELIVE & 0.212 & 0.214 & 0.226\\
+intentionality & 1-VIZUALIZE/PICTURE & 3-SUPPOSE/ASSUME & 0.307 & 0.309 & 0.343\\
+intentionality & 1-VIZUALIZE/PICTURE & 4-FALSE\_PERCEPTION & 0.220 & 0.222 & 0.231\\
+intentionality & 2-THINK/BELIVE & 3-SUPPOSE/ASSUME & 0.675 & 0.742 & 0.820\\
+intentionality & 2-THINK/BELIVE & 4-FALSE\_PERCEPTION & 0.762 & 0.838 & 0.830\\
+intentionality & 3-SUPPOSE/ASSUME & 4-FALSE\_PERCEPTION & 0.655 & 0.796 & 0.714\\
+factivity & 1-VIZUALIZE/PICTURE & 2-THINK/BELIVE & 0.584 & 0.614 & 0.610\\
+factivity & 1-VIZUALIZE/PICTURE & 3-SUPPOSE/ASSUME & 0.608 & 0.633 & 0.631\\
+factivity & 1-VIZUALIZE/PICTURE & 4-FALSE\_PERCEPTION & 0.738 & 0.775 & 0.766\\
+factivity & 2-THINK/BELIVE & 3-SUPPOSE/ASSUME & 0.936 & 0.960 & 0.972\\
+factivity & 2-THINK/BELIVE & 4-FALSE\_PERCEPTION & 0.389 & 0.406 & 0.404\\
+factivity & 3-SUPPOSE/ASSUME & 4-FALSE\_PERCEPTION & 0.409 & 0.424 & 0.422\\
+pictoriality & 1-VIZUALIZE/PICTURE & 2-THINK/BELIVE & 0.560 & 0.601 & 0.582\\
+pictoriality & 1-VIZUALIZE/PICTURE & 3-SUPPOSE/ASSUME & 0.483 & 0.519 & 0.523\\
+pictoriality & 1-VIZUALIZE/PICTURE & 4-FALSE\_PERCEPTION & 0.670 & 0.719 & 0.749\\
+pictoriality & 2-THINK/BELIVE & 3-SUPPOSE/ASSUME & 0.771 & 0.808 & 0.834\\
+pictoriality & 2-THINK/BELIVE & 4-FALSE\_PERCEPTION & 0.742 & 0.777 & 0.853\\
+pictoriality & 3-SUPPOSE/ASSUME & 4-FALSE\_PERCEPTION & 0.662 & 0.717 & 0.761\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -939,7 +972,7 @@ pictoriality & 3-SUPPOSE/ASSUME & 3-SUPPOSE/ASSUME & 0.662 & 0.717 & 0.761\\
 
 \begin{landscape}\begin{table}[H]
 \centering
-\caption{\label{tab:unnamed-chunk-30}Confusion Matrix.\label{tab:cm}}
+\caption{\label{tab:unnamed-chunk-32}Confusion matrix by sense for predictive modeling.\label{tab:cm}}
 \centering
 \fontsize{8}{10}\selectfont
 \begin{tabular}[t]{lrrrr}
