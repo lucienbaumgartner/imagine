@@ -265,7 +265,7 @@ pairwise interactions. Regularization strength was selected via
 cross-validation to promote coefficient stability.
 
 The multinomial model achieved a cross-validated accuracy of 75.6\% with
-optimal \(\lambda\)=0.034. Performance was highly uneven across senses,
+optimal \(\lambda\)=0.037. Performance was highly uneven across senses,
 however. Table \ref{tab:senseAccuracy} details accuracy per sense:
 
 \begin{itemize}
@@ -273,17 +273,17 @@ however. Table \ref{tab:senseAccuracy} details accuracy per sense:
 \item
   \texttt{"1-VISUALIZE/PICTURE"} was recovered with high accuracy
   (97.1\%) and high posterior concentration
-  (\(\tilde{p}_{\max}\)=0.824), indicating a well-defined feature
+  (\(\tilde{p}_{\max}\)=0.822), indicating a well-defined feature
   region.
 \item
   \texttt{"2-THINK/BELIEVE"} showed moderate accuracy (73.7\%) with
-  correspondingly moderate confidence (\(\tilde{p}_{\max}\)=0.634).
+  correspondingly moderate confidence (\(\tilde{p}_{\max}\)=0.631).
 \item
   \texttt{"3-SUPPOSE/ASSUME"} \& \texttt{"4-FALSE\_PERCEPTION"} were not
   reliably recovered (accuracy=0\% and 11.9\% respectively). Both were
   misclassified \texttt{"1-VISUALIZE/PICTURE"} or
   \texttt{"2-THINK/BELIEVE"} with low to moderate confidence
-  (\(\tilde{p}_{\max}\)=0.676 and \(\tilde{p}_{\max}\)=0.567
+  (\(\tilde{p}_{\max}\)=0.677 and \(\tilde{p}_{\max}\)=0.564
   respectively).
 \end{itemize}
 
@@ -295,10 +295,10 @@ however. Table \ref{tab:senseAccuracy} details accuracy per sense:
 \toprule
 True Sense & $\tilde{p}_{\max}$ & $\text{IQR}(\hat{p}_{\max})$ & Accuracy\\
 \midrule
-1-VIZUALIZE/PICTURE & 0.824 & 0.177 & 0.971\\
-2-THINK/BELIVE & 0.634 & 0.193 & 0.737\\
-3-SUPPOSE/ASSUME & 0.676 & 0.180 & 0.000\\
-4-FALSE\_PERCEPTION & 0.567 & 0.243 & 0.119\\
+1-VIZUALIZE/PICTURE & 0.822 & 0.176 & 0.971\\
+2-THINK/BELIVE & 0.631 & 0.191 & 0.737\\
+3-SUPPOSE/ASSUME & 0.677 & 0.177 & 0.000\\
+4-FALSE\_PERCEPTION & 0.564 & 0.245 & 0.119\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -899,14 +899,12 @@ embeddings used above are therefore a reasonable, representative choice,
 not an idiosyncratic one that happens to drive the reported conclusions.
 
 We extended the same check to the ``Geometric overlap'' analysis above
-(the PCA-reduced, KDE-based overlap fractions), which goes through an
-additional dimensionality-reduction step centroid overlap does not and
-so could in principle respond differently to a change in layer. That
-method has no per-token classification step -- it only ever reports
-overlap fractions between pairs of KDE-estimated densities -- so there
-is no categorical output for Cohen's \(\kappa\) to compare here; we
-report Spearman's \(\rho\) on the overlap-fraction vectors alone,
-separately for the 1D and 2D reductions.
+(the PCA-reduced, KDE-based overlap fractions). That method has no
+per-token classification step. It only ever reports overlap fractions
+between pairs of KDE-estimated densities. Hence, there is no categorical
+output for Cohen's \(\kappa\) to compare here; we only report Spearman's
+\(\rho\) on the overlap-fraction vectors alone, separately for the 1D
+and 2D reductions.
 
 \begin{table}[H]
 \centering

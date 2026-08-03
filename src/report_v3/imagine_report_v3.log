@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.7.20)  3 AUG 2026 15:13
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.7.20)  3 AUG 2026 15:27
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -812,7 +812,7 @@ Package pdftex.def Info: ../../output/plots/embedding_projection_factivity_picto
 (pdftex.def)             Requested size: 119.2467pt x 119.24255pt.
 [13 <../../output/plots/embedding_projection_3D_v3.png>] [14 <../../output/plots/embedding_projection_intentionality_factivity_2D_core_v3.png> <../../output/plots/embedding_projection_intentionality_pictoriality_2D_core_v3.png> <../../output/plots/embedding_projection_factivity_pictoriality_2D_core_v3.png>] [15] [16]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 948.
+(Font)              <8> on input line 946.
 [17
 
 ] [18
@@ -838,7 +838,7 @@ Here is how much of TeX's memory you used:
  36 hyphenation exceptions out of 8191
  83i,12n,93p,1014b,687s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi6.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi9.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmib10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmib7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr5.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></Users/lb/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on imagine_report_v3.pdf (18 pages, 3880772 bytes).
+Output written on imagine_report_v3.pdf (18 pages, 3881237 bytes).
 PDF statistics:
  423 PDF objects out of 1000 (max. 8388607)
  315 compressed objects within 4 object streams
